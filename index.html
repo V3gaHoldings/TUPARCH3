@@ -10,18 +10,41 @@
   body { background:#f8fafc; color:#0f172a; }
   @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
   .fade { animation:fadeUp .4s ease both; }
-  #login { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:16px; background:linear-gradient(135deg,#0f172a,#1e1b4b,#0c4a6e); }
+
+  /* SELECTOR DE PORTAL */
+  #portalSelect { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:16px; background:linear-gradient(135deg,#0f172a,#1e1b4b,#0c4a6e); }
+  .portal-wrap { width:100%; max-width:840px; }
+  .portal-header { text-align:center; margin-bottom:40px; }
+  .portal-header .logo { width:64px; height:64px; margin:0 auto 16px; border-radius:14px; background:linear-gradient(135deg,#4f46e5,#9333ea); display:flex; align-items:center; justify-content:center; }
+  .portal-header h1 { color:#fff; font-size:26px; }
+  .portal-header p { color:#94a3b8; font-size:14px; margin-top:6px; }
+  .portal-cards { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .portal-card { border-radius:18px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.05); backdrop-filter:blur(20px); padding:32px; cursor:pointer; transition:all .25s; text-align:center; }
+  .portal-card:hover { transform:translateY(-4px); border-color:#6366f1; background:rgba(99,102,241,.12); }
+  .portal-card .pc-icon { width:56px; height:56px; margin:0 auto 16px; border-radius:14px; display:flex; align-items:center; justify-content:center; }
+  .portal-card h2 { color:#fff; font-size:18px; margin-bottom:8px; }
+  .portal-card p { color:#94a3b8; font-size:13px; line-height:1.5; }
+  .portal-card .pc-tag { display:inline-block; margin-top:14px; font-size:11px; font-weight:600; padding:4px 12px; border-radius:999px; }
+
+  /* LOGIN */
+  #login { min-height:100vh; display:none; align-items:center; justify-content:center; padding:16px; }
   .login-card { width:100%; max-width:400px; border-radius:16px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.06); backdrop-filter:blur(20px); padding:32px; }
-  .logo { width:56px; height:56px; margin:0 auto 16px; border-radius:12px; background:linear-gradient(135deg,#4f46e5,#9333ea); display:flex; align-items:center; justify-content:center; }
+  .logo { width:56px; height:56px; margin:0 auto 16px; border-radius:12px; display:flex; align-items:center; justify-content:center; }
   .login-card h1 { color:#fff; font-size:20px; text-align:center; }
-  .login-card .sub { color:#94a3b8; font-size:13px; text-align:center; margin-bottom:28px; }
+  .login-card .sub { color:#94a3b8; font-size:13px; text-align:center; margin-bottom:6px; }
+  .login-card .portal-name { font-size:12px; font-weight:600; text-align:center; margin-bottom:24px; padding:4px 12px; border-radius:999px; display:inline-block; }
+  .pn-wrap { text-align:center; }
   .field label { color:#cbd5e1; font-size:12px; display:block; margin-bottom:4px; }
   .field input { width:100%; border-radius:8px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.05); padding:10px 12px; color:#fff; font-size:14px; margin-bottom:14px; }
   .field input:focus { outline:none; border-color:#6366f1; }
-  .btn-primary { width:100%; border-radius:8px; border:none; cursor:pointer; background:linear-gradient(to right,#4f46e5,#9333ea); padding:11px; color:#fff; font-weight:600; font-size:14px; }
+  .btn-primary { width:100%; border-radius:8px; border:none; cursor:pointer; padding:11px; color:#fff; font-weight:600; font-size:14px; }
   .btn-primary:hover { opacity:.92; }
-  .hint { color:#64748b; font-size:12px; text-align:center; margin-top:22px; }
+  .hint { color:#64748b; font-size:12px; text-align:center; margin-top:18px; }
+  .back-link { color:#94a3b8; font-size:12px; text-align:center; margin-top:14px; cursor:pointer; }
+  .back-link:hover { color:#fff; }
   .err { color:#f87171; font-size:13px; margin-bottom:10px; display:none; }
+
+  /* APP EMPRESA */
   #app { display:none; }
   .layout { display:flex; min-height:100vh; }
   .sidebar { width:240px; background:#fff; border-right:1px solid #e2e8f0; display:flex; flex-direction:column; }
@@ -59,31 +82,82 @@
   .dropzone:hover { border-color:#6366f1; }
   .stat-box { background:#f8fafc; border-radius:8px; padding:12px; }
   .stat-box .l { font-size:11px; color:#64748b; } .stat-box .v { font-size:24px; font-weight:700; }
+
+  /* PORTAL COLABORADOR (solo chat) */
+  #coachApp { display:none; min-height:100vh; background:#f1f5f9; }
+  .coach-topbar { height:64px; background:#fff; border-bottom:1px solid #e2e8f0; display:flex; align-items:center; justify-content:space-between; padding:0 24px; }
+  .coach-topbar .ct-left { display:flex; align-items:center; gap:10px; }
+  .coach-topbar .ct-logo { width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg,#10b981,#059669); display:flex; align-items:center; justify-content:center; }
+  .coach-logout { border:1px solid #e2e8f0; background:#fff; border-radius:8px; padding:8px 14px; font-size:13px; cursor:pointer; color:#64748b; }
+  .coach-main { max-width:760px; margin:0 auto; padding:24px 16px; }
+  .coach-welcome { background:linear-gradient(135deg,#10b981,#059669); border-radius:16px; padding:24px; color:#fff; margin-bottom:20px; }
+  .coach-welcome h2 { font-size:20px; margin-bottom:6px; }
+  .coach-welcome p { font-size:14px; opacity:.9; }
+  .topic-chips { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+  .chip { background:#fff; border:1px solid #e2e8f0; border-radius:999px; padding:6px 14px; font-size:13px; cursor:pointer; color:#475569; }
+  .chip:hover { border-color:#10b981; color:#10b981; }
+  #chatBox2 { height:48vh; overflow-y:auto; border:1px solid #e2e8f0; border-radius:14px; padding:16px; background:#fff; }
+  .chat-input-row { display:flex; gap:8px; margin-top:12px; }
+  .chat-input-row input { flex:1; border:1px solid #e2e8f0; border-radius:12px; padding:14px; font-size:14px; }
+  .chat-input-row button { width:52px; border:none; border-radius:12px; background:#10b981; color:#fff; cursor:pointer; font-size:18px; }
 </style>
 </head>
 <body>
 
-<div id="login">
-  <div class="login-card fade">
-    <div class="logo"><svg width="28" height="28" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
-    <h1>TUPARCH3&trade;</h1>
-    <p class="sub">Workforce Intelligence Platform</p>
-    <form id="loginForm">
-      <div class="field"><label>Correo Corporativo</label><input id="email" type="email" value="admin@empresa.com" autocomplete="username"></div>
-      <div class="field"><label>Contraseña (cédula)</label><input id="pass" type="password" value="1023456789" autocomplete="current-password"></div>
-      <p class="err" id="loginErr"></p>
-      <button class="btn-primary" type="submit">Iniciar Sesión</button>
-    </form>
-    <p class="hint">Demo: admin@empresa.com / 1023456789</p>
+<!-- ===== SELECTOR DE PORTAL ===== -->
+<div id="portalSelect">
+  <div class="portal-wrap fade">
+    <div class="portal-header">
+      <div class="logo"><svg width="32" height="32" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+      <h1>TUPARCH3&trade;</h1>
+      <p>Workforce Intelligence Platform · Selecciona tu portal de acceso</p>
+    </div>
+    <div class="portal-cards">
+      <div class="portal-card" onclick="goToLogin('empresa')">
+        <div class="pc-icon" style="background:linear-gradient(135deg,#4f46e5,#9333ea);">
+          <svg width="28" height="28" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/></svg>
+        </div>
+        <h2>Portal Empresa</h2>
+        <p>Acceso para Presidencia, Gerencia, Dirección Comercial, RRHH y Operaciones. Dashboards ejecutivos, comercial, retención y financiero.</p>
+        <span class="pc-tag" style="background:#4f46e519;color:#6366f1;">ADMINISTRACIÓN</span>
+      </div>
+      <div class="portal-card" onclick="goToLogin('colaborador')">
+        <div class="pc-icon" style="background:linear-gradient(135deg,#10b981,#059669);">
+          <svg width="28" height="28" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        </div>
+        <h2>Portal Colaborador</h2>
+        <p>Acceso exclusivo a TUPARCH3 AI Coach™. Tu coach organizacional personal y confidencial para tu desarrollo y bienestar laboral.</p>
+        <span class="pc-tag" style="background:#10b98119;color:#10b981;">AI COACH</span>
+      </div>
+    </div>
   </div>
 </div>
 
+<!-- ===== LOGIN ===== -->
+<div id="login">
+  <div class="login-card fade">
+    <div id="loginLogo" class="logo"></div>
+    <h1>TUPARCH3&trade;</h1>
+    <p class="sub">Workforce Intelligence Platform</p>
+    <div class="pn-wrap"><span id="portalName" class="portal-name"></span></div>
+    <form id="loginForm" style="margin-top:8px;">
+      <div class="field"><label>Correo Corporativo</label><input id="email" type="email" placeholder="correo@empresa.com" autocomplete="username"></div>
+      <div class="field"><label>Contraseña (cédula)</label><input id="pass" type="password" placeholder="Tu número de cédula" autocomplete="current-password"></div>
+      <p class="err" id="loginErr"></p>
+      <button id="loginBtn" class="btn-primary" type="submit">Iniciar Sesión</button>
+    </form>
+    <p class="hint" id="loginHint"></p>
+    <p class="back-link" onclick="backToPortal()">← Volver a selección de portal</p>
+  </div>
+</div>
+
+<!-- ===== APP EMPRESA ===== -->
 <div id="app">
   <div class="layout">
     <aside class="sidebar">
       <div class="sb-head">
         <div class="sb-logo"><svg width="20" height="20" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
-        <div><b>TUPARCH3&trade;</b><small>Workforce Intelligence</small></div>
+        <div><b>TUPARCH3&trade;</b><small>Portal Empresa</small></div>
       </div>
       <nav id="nav"></nav>
       <button class="logout" id="logoutBtn">Cerrar Sesión</button>
@@ -95,51 +169,68 @@
   </div>
 </div>
 
-<!-- ===== DATA REAL EMBEBIDA (300 empleados) ===== -->
-<script id="rawData" type="text/plain">
-EMP0001	Paula Martínez Martínez	100000001	empleado001@empresa-demo.com	Bucaramanga	Pacífico	Comercial	Equipo A	Supervisor Comercial	Líder	Felipe Vargas	2018-08-24		Activo	Indefinido	3895759	103162670	32539328		No
-EMP0002	Carlos López García	100000002	empleado002@empresa-demo.com	Bogotá	Oriente	Ventas	Equipo D	Ejecutivo de Ventas	Profesional	Felipe Vargas	2019-05-08		Activo	Indefinido	4351839	80278831	80342553		No
-</script>
+<!-- ===== PORTAL COLABORADOR (solo chat) ===== -->
+<div id="coachApp">
+  <div class="coach-topbar">
+    <div class="ct-left">
+      <div class="ct-logo"><svg width="20" height="20" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+      <div><b style="font-size:14px;">TUPARCH3 AI Coach&trade;</b><div style="font-size:11px;color:#64748b;">Tu coach organizacional personal</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <span id="coachUserName" style="font-size:13px;font-weight:500;"></span>
+      <button class="coach-logout" id="coachLogoutBtn">Cerrar Sesión</button>
+    </div>
+  </div>
+  <div class="coach-main">
+    <div class="coach-welcome">
+      <h2>👋 Hola, <span id="coachWelcomeName">colaborador</span></h2>
+      <p>Soy tu coach organizacional. Conversa conmigo de forma confidencial sobre estrés, metas, motivación, liderazgo o cualquier tema laboral.</p>
+    </div>
+    <div class="topic-chips">
+      <span class="chip" onclick="quickTopic('Me siento con mucho estrés por las metas')">😰 Estrés laboral</span>
+      <span class="chip" onclick="quickTopic('No me siento motivado últimamente')">💤 Motivación</span>
+      <span class="chip" onclick="quickTopic('Tengo problemas con mi líder')">👥 Liderazgo</span>
+      <span class="chip" onclick="quickTopic('No logro cumplir mis metas de ventas')">🎯 Metas</span>
+      <span class="chip" onclick="quickTopic('No sé organizar mi tiempo')">⏰ Tiempo</span>
+    </div>
+    <div id="chatBox2"></div>
+    <div class="chat-input-row">
+      <input id="chatInput2" placeholder="Escribe tu mensaje..." />
+      <button id="chatSend2">➤</button>
+    </div>
+  </div>
+</div>
 
+<!-- ===== DATA REAL (pega aquí tus 300 filas) ===== -->
 <script>
 "use strict";
 
-/* ============ DATA REAL (TSV completo) ============ */
 var RAW_TSV = `EMP0001	Paula Martínez Martínez	100000001	empleado001@empresa-demo.com	Bucaramanga	Pacífico	Comercial	Equipo A	Supervisor Comercial	Líder	Felipe Vargas	2018-08-24		Activo	Indefinido	3895759	103162670	32539328		No
 EMP0002	Carlos López García	100000002	empleado002@empresa-demo.com	Bogotá	Oriente	Ventas	Equipo D	Ejecutivo de Ventas	Profesional	Felipe Vargas	2019-05-08		Activo	Indefinido	4351839	80278831	80342553		No
 EMP0003	Paula Ramírez Vargas	100000003	empleado003@empresa-demo.com	Cartagena	Oriente	Trade Marketing	Equipo C	Ejecutivo de Ventas	Profesional	Ricardo López	2023-12-02		Activo	Fijo	7940014	175972514	114899130		Sí
 EMP0004	Paula García Vargas	100000004	empleado004@empresa-demo.com	Bogotá	Oriente	Ventas	Equipo D	Ejecutivo de Ventas	Profesional	Sandra Gómez	2018-07-19	2019-08-17	Inactivo	Indefinido	2572783	163915579	161318600	Renuncia Voluntaria	Sí
 EMP0005	Luis García Vargas	100000005	empleado005@empresa-demo.com	Bogotá	Pacífico	Trade Marketing	Equipo B	Ejecutivo de Ventas	Profesional	Sandra Gómez	2023-08-24		Activo	Obra o Labor	4245750	105165063	32969623		No`;
 
-/*
-  IMPORTANTE: Por límite de espacio, arriba van solo 5 filas de ejemplo.
-  Pega TODAS tus 300 filas dentro de los backticks de RAW_TSV (reemplaza el contenido).
-  El formato debe ser EXACTAMENTE el mismo que pegaste (separado por TABS).
-  Mantén una fila por línea, sin encabezado.
-*/
+/* ⚠️ PEGA AQUÍ TUS 300 FILAS COMPLETAS reemplazando el contenido entre backticks arriba */
 
 /* ============ ESTADO ============ */
 var DB = { employees: [], users: [] };
 var CURRENT = null;
+var SELECTED_PORTAL = null;
 
 /* ============ HELPERS ============ */
-function rand(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
 function clamp(n, a, b) { a = (a === undefined ? 0 : a); b = (b === undefined ? 100 : b); return Math.max(a, Math.min(b, n)); }
 function fmtCOP(n) { return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n || 0); }
 function avg(arr, f) { if (!arr.length) return 0; var s = 0; for (var i = 0; i < arr.length; i++) s += (f(arr[i]) || 0); return Math.round(s / arr.length); }
 function activeEmp() { return DB.employees.filter(function (e) { return e.status === 'ACTIVO'; }); }
 function num(v) { if (v == null || v === '') return 0; var n = Number(String(v).replace(/[^0-9.-]/g, '')); return isNaN(n) ? 0 : n; }
 function riskStyle(l) { var m = { BAJO:'color:#10b981;background:#10b98119', MEDIO:'color:#f59e0b;background:#f59e0b19', ALTO:'color:#f97316;background:#f9731619', CRITICO:'color:#ef4444;background:#ef444419' }; return m[l] || ''; }
-
-/* Hash determinístico para generar scores estables por cédula */
 function seededRand(seed) { var x = Math.sin(seed) * 10000; return x - Math.floor(x); }
 
 /* ============ SCORES ============ */
 function computeScores(e) {
-  // Genera stress/motivation/satisfaction deterministas basados en cédula + desempeño comercial
   var s = parseInt(e.cedula.slice(-4)) || 1;
   var achievement = e.salesGoal > 0 ? (e.salesAccumulated / e.salesGoal) * 100 : 60;
-  // Bajo cumplimiento => más estrés, menos motivación
   var perfFactor = clamp(achievement, 0, 150) / 150;
   e.stress = Math.round(clamp(30 + seededRand(s) * 50 + (1 - perfFactor) * 25));
   e.motivation = Math.round(clamp(40 + perfFactor * 40 + seededRand(s * 2) * 20));
@@ -149,7 +240,6 @@ function computeScores(e) {
   e.replacementCost = Math.round(e.baseSalary * (e.level === 'Líder' ? 4 : e.level === 'Profesional' ? 2.5 : 1.8));
   e.trainingCost = Math.round(e.baseSalary * 1.2);
   e.replTime = e.level === 'Líder' ? 90 : e.level === 'Profesional' ? 60 : 35;
-
   e.burnoutRisk = Math.round(clamp(e.stress * 0.6 + (100 - e.motivation) * 0.4));
   e.engagement = Math.round(clamp(e.motivation * 0.5 + e.satisfaction * 0.5));
   var risk = (e.stress / 100) * 18 + (e.burnoutRisk / 100) * 15 + ((100 - e.motivation) / 100) * 18 + ((100 - e.satisfaction) / 100) * 10;
@@ -160,101 +250,32 @@ function computeScores(e) {
   e.riskLevel = e.retentionRisk >= 75 ? 'CRITICO' : e.retentionRisk >= 50 ? 'ALTO' : e.retentionRisk >= 30 ? 'MEDIO' : 'BAJO';
 }
 
-/* ============ CARGAR DATA REAL ============ */
+/* ============ CARGAR DATA ============ */
 function loadRealData() {
   DB = { employees: [], users: [] };
   DB.users.push({ email: 'admin@empresa.com', pass: '1023456789', role: 'ADMIN', name: 'Administrador' });
   DB.users.push({ email: 'rrhh@empresa.com', pass: '1023456789', role: 'RRHH', name: 'Talento Humano' });
-
   var lines = RAW_TSV.trim().split('\n');
   lines.forEach(function (line) {
     var c = line.split('\t');
     if (c.length < 16) return;
     var status = /inactivo|retir/i.test(c[13]) ? 'RETIRADO' : 'ACTIVO';
-    var e = {
-      id: c[0], fullName: c[1], cedula: c[2], email: c[3].toLowerCase().trim(),
-      city: c[4], regional: c[5], area: c[6], team: c[7], position: c[8], level: c[9],
-      managerName: c[10], hireDate: c[11] || null, exitDate: c[12] || null,
-      status: status, contractType: c[14], baseSalary: num(c[15]),
-      salesGoal: num(c[16]), salesAccumulated: num(c[17]),
-      exitReason: c[18] || null, isCritical: /sí|si/i.test(c[19] || ''),
-      managerEmail: null
-    };
+    var e = { id: c[0], fullName: c[1], cedula: c[2], email: c[3].toLowerCase().trim(), city: c[4], regional: c[5], area: c[6], team: c[7], position: c[8], level: c[9], managerName: c[10], hireDate: c[11] || null, exitDate: c[12] || null, status: status, contractType: c[14], baseSalary: num(c[15]), salesGoal: num(c[16]), salesAccumulated: num(c[17]), exitReason: c[18] || null, isCritical: /sí|si/i.test(c[19] || ''), managerEmail: null };
     computeScores(e);
     DB.employees.push(e);
     DB.users.push({ email: e.email, pass: e.cedula, role: e.level === 'Líder' ? 'LIDER' : 'COLABORADOR', name: e.fullName });
   });
   saveDB();
 }
-
 function saveDB() { try { localStorage.setItem('t3db', JSON.stringify(DB)); } catch (e) {} }
-function loadDB() {
-  try { var d = localStorage.getItem('t3db'); if (d) DB = JSON.parse(d); } catch (e) {}
-  if (!DB.employees || DB.employees.length < 10) loadRealData();
-}
+function loadDB() { try { var d = localStorage.getItem('t3db'); if (d) DB = JSON.parse(d); } catch (e) {} if (!DB.employees || DB.employees.length < 4) loadRealData(); }
 
 /* ============ MÉTRICAS ============ */
-function mWorkforceHealth() {
-  var a = activeEmp();
-  return {
-    health: avg(a, function (e) { return 100 - e.stress * 0.4 + e.engagement * 0.6 - 30; }),
-    motivation: avg(a, function (e) { return e.motivation; }), stress: avg(a, function (e) { return e.stress; }),
-    burnout: avg(a, function (e) { return e.burnoutRisk; }), satisfaction: avg(a, function (e) { return e.satisfaction; }),
-    engagement: avg(a, function (e) { return e.engagement; }), total: a.length
-  };
-}
-function mCommercial() {
-  var a = activeEmp().filter(function (e) { return e.salesGoal > 0; });
-  function seg(key) {
-    var g = {};
-    a.forEach(function (e) { var k = e[key] || 'N/A'; if (!g[k]) g[k] = { goal: 0, act: 0 }; g[k].goal += e.salesGoal; g[k].act += e.salesAccumulated; });
-    return Object.keys(g).map(function (k) { return { name: k, achievement: g[k].goal ? +(g[k].act / g[k].goal * 100).toFixed(1) : 0 }; }).sort(function (x, y) { return y.achievement - x.achievement; });
-  }
-  var tg = 0, ta = 0; a.forEach(function (e) { tg += e.salesGoal; ta += e.salesAccumulated; });
-  return { overall: tg ? +(ta / tg * 100).toFixed(1) : 0, totalGoal: tg, totalActual: ta,
-    byRegional: seg('regional'), byCity: seg('city'), byArea: seg('area'), byTeam: seg('team'), byPosition: seg('position'), byManager: seg('managerName') };
-}
-function mTurnover() {
-  var all = DB.employees, ret = all.filter(function (e) { return e.status === 'RETIRADO'; });
-  function rate() { return +(ret.length / (all.length || 1) * 100).toFixed(1); }
-  function seg(key) {
-    var g = {};
-    all.forEach(function (e) { var k = e[key] || 'N/A'; if (!g[k]) g[k] = { ex: 0, t: 0 }; g[k].t++; if (e.status === 'RETIRADO') g[k].ex++; });
-    return Object.keys(g).map(function (k) { return { name: k, rate: +(g[k].ex / g[k].t * 100).toFixed(1), ex: g[k].ex, t: g[k].t }; }).sort(function (a, b) { return b.rate - a.rate; });
-  }
-  var reasons = {};
-  ret.forEach(function (e) { var r = e.exitReason || 'N/E'; reasons[r] = (reasons[r] || 0) + 1; });
-  return { overall: rate(), totalRet: ret.length, byCity: seg('city'), byRegional: seg('regional'), byArea: seg('area'), byPosition: seg('position'),
-    causal: Object.keys(reasons).map(function (r) { return { reason: r, count: reasons[r] }; }).sort(function (a, b) { return b.count - a.count; }) };
-}
-function mFinancial() {
-  var ret = DB.employees.filter(function (e) { return e.status === 'RETIRADO'; });
-  var atRisk = activeEmp().filter(function (e) { return e.retentionRisk >= 50; });
-  var repl = 0, train = 0, prod = 0, proj = 0;
-  ret.forEach(function (e) { repl += e.replacementCost; train += e.trainingCost; prod += (e.baseSalary / 30) * e.replTime; });
-  atRisk.forEach(function (e) { proj += (e.replacementCost + e.trainingCost) * (e.retentionRisk / 100); });
-  var total = repl + train + prod;
-  var roi = proj > 0 ? Math.round(((proj - proj * 0.15) / (proj * 0.15)) * 100) : 0;
-  return { turnoverCost: total, replacementCost: repl, trainingCost: train, productivityLoss: prod, financialRisk: proj, economicImpact: total + proj, roi: roi, atRisk: atRisk.length };
-}
-function mInsights() {
-  var e = activeEmp();
-  function pearson(xs, ys) {
-    var n = xs.length; if (n < 3) return 0; var mx = 0, my = 0; for (var i = 0; i < n; i++) { mx += xs[i]; my += ys[i]; } mx /= n; my /= n;
-    var num = 0, dx = 0, dy = 0; for (var k = 0; k < n; k++) { num += (xs[k] - mx) * (ys[k] - my); dx += Math.pow(xs[k] - mx, 2); dy += Math.pow(ys[k] - my, 2); }
-    return (dx && dy) ? +(num / Math.sqrt(dx * dy)).toFixed(2) : 0;
-  }
-  var stress = e.map(function (x) { return x.stress; }), mot = e.map(function (x) { return x.motivation; });
-  var ach = e.map(function (x) { return x.salesGoal > 0 ? x.salesAccumulated / x.salesGoal * 100 : 0; });
-  var ret = e.map(function (x) { return x.retentionRisk; }), abs = e.map(function (x) { return x.absentDays; });
-  var out = [];
-  var c1 = pearson(stress, ach); if (c1 < -0.1) out.push('Los colaboradores con altos niveles de estrés presentan una reducción promedio del ' + Math.abs(Math.round(c1 * 20)) + '% en cumplimiento de metas.');
-  var c2 = pearson(mot, ret); if (c2 < -0.1) out.push('Los colaboradores con mayor motivación muestran menor intención de renuncia (correlación ' + c2 + ').');
-  var c3 = pearson(stress, abs); if (c3 > 0.1) out.push('El estrés laboral se correlaciona con mayor ausentismo (' + c3 + ').');
-  var c4 = pearson(mot, ach); if (c4 > 0.1) out.push('Mayor motivación se asocia con mejor cumplimiento comercial (' + c4 + ').');
-  if (!out.length) out.push('Análisis estadístico de correlaciones organizacionales en proceso.');
-  return out;
-}
+function mWorkforceHealth() { var a = activeEmp(); return { health: avg(a, function (e) { return 100 - e.stress * 0.4 + e.engagement * 0.6 - 30; }), motivation: avg(a, function (e) { return e.motivation; }), stress: avg(a, function (e) { return e.stress; }), burnout: avg(a, function (e) { return e.burnoutRisk; }), satisfaction: avg(a, function (e) { return e.satisfaction; }), engagement: avg(a, function (e) { return e.engagement; }), total: a.length }; }
+function mCommercial() { var a = activeEmp().filter(function (e) { return e.salesGoal > 0; }); function seg(key) { var g = {}; a.forEach(function (e) { var k = e[key] || 'N/A'; if (!g[k]) g[k] = { goal: 0, act: 0 }; g[k].goal += e.salesGoal; g[k].act += e.salesAccumulated; }); return Object.keys(g).map(function (k) { return { name: k, achievement: g[k].goal ? +(g[k].act / g[k].goal * 100).toFixed(1) : 0 }; }).sort(function (x, y) { return y.achievement - x.achievement; }); } var tg = 0, ta = 0; a.forEach(function (e) { tg += e.salesGoal; ta += e.salesAccumulated; }); return { overall: tg ? +(ta / tg * 100).toFixed(1) : 0, totalGoal: tg, totalActual: ta, byRegional: seg('regional'), byCity: seg('city'), byArea: seg('area'), byTeam: seg('team'), byPosition: seg('position'), byManager: seg('managerName') }; }
+function mTurnover() { var all = DB.employees, ret = all.filter(function (e) { return e.status === 'RETIRADO'; }); function seg(key) { var g = {}; all.forEach(function (e) { var k = e[key] || 'N/A'; if (!g[k]) g[k] = { ex: 0, t: 0 }; g[k].t++; if (e.status === 'RETIRADO') g[k].ex++; }); return Object.keys(g).map(function (k) { return { name: k, rate: +(g[k].ex / g[k].t * 100).toFixed(1), ex: g[k].ex, t: g[k].t }; }).sort(function (a, b) { return b.rate - a.rate; }); } var reasons = {}; ret.forEach(function (e) { var r = e.exitReason || 'N/E'; reasons[r] = (reasons[r] || 0) + 1; }); return { overall: +(ret.length / (all.length || 1) * 100).toFixed(1), totalRet: ret.length, byCity: seg('city'), byRegional: seg('regional'), byArea: seg('area'), byPosition: seg('position'), causal: Object.keys(reasons).map(function (r) { return { reason: r, count: reasons[r] }; }).sort(function (a, b) { return b.count - a.count; }) }; }
+function mFinancial() { var ret = DB.employees.filter(function (e) { return e.status === 'RETIRADO'; }); var atRisk = activeEmp().filter(function (e) { return e.retentionRisk >= 50; }); var repl = 0, train = 0, prod = 0, proj = 0; ret.forEach(function (e) { repl += e.replacementCost; train += e.trainingCost; prod += (e.baseSalary / 30) * e.replTime; }); atRisk.forEach(function (e) { proj += (e.replacementCost + e.trainingCost) * (e.retentionRisk / 100); }); var total = repl + train + prod; var roi = proj > 0 ? Math.round(((proj - proj * 0.15) / (proj * 0.15)) * 100) : 0; return { turnoverCost: total, replacementCost: repl, trainingCost: train, productivityLoss: prod, financialRisk: proj, economicImpact: total + proj, roi: roi, atRisk: atRisk.length }; }
+function mInsights() { var e = activeEmp(); function pearson(xs, ys) { var n = xs.length; if (n < 3) return 0; var mx = 0, my = 0; for (var i = 0; i < n; i++) { mx += xs[i]; my += ys[i]; } mx /= n; my /= n; var num = 0, dx = 0, dy = 0; for (var k = 0; k < n; k++) { num += (xs[k] - mx) * (ys[k] - my); dx += Math.pow(xs[k] - mx, 2); dy += Math.pow(ys[k] - my, 2); } return (dx && dy) ? +(num / Math.sqrt(dx * dy)).toFixed(2) : 0; } var stress = e.map(function (x) { return x.stress; }), mot = e.map(function (x) { return x.motivation; }), ach = e.map(function (x) { return x.salesGoal > 0 ? x.salesAccumulated / x.salesGoal * 100 : 0; }), ret = e.map(function (x) { return x.retentionRisk; }), abs = e.map(function (x) { return x.absentDays; }); var out = []; var c1 = pearson(stress, ach); if (c1 < -0.1) out.push('Los colaboradores con altos niveles de estrés presentan una reducción promedio del ' + Math.abs(Math.round(c1 * 20)) + '% en cumplimiento de metas.'); var c2 = pearson(mot, ret); if (c2 < -0.1) out.push('Los colaboradores con mayor motivación muestran menor intención de renuncia (correlación ' + c2 + ').'); var c3 = pearson(stress, abs); if (c3 > 0.1) out.push('El estrés laboral se correlaciona con mayor ausentismo (' + c3 + ').'); var c4 = pearson(mot, ach); if (c4 > 0.1) out.push('Mayor motivación se asocia con mejor cumplimiento comercial (' + c4 + ').'); if (!out.length) out.push('Análisis estadístico de correlaciones organizacionales en proceso.'); return out; }
 
 /* ============ UI ============ */
 function kpi(t, v, s, c) { var clr = { blue:'#3b82f6', green:'#10b981', amber:'#f59e0b', red:'#ef4444', purple:'#a855f7' }[c]; return '<div class="kpi fade" style="border:1px solid '+clr+'33;background:'+clr+'0d;"><div class="label">'+t+'</div><div class="val">'+v+'</div>'+(s?'<div class="sub">'+s+'</div>':'')+'</div>'; }
@@ -262,150 +283,86 @@ function card(t, b) { return '<div class="card">'+(t?'<h3>'+t+'</h3>':'')+b+'</d
 function bar(n, p) { return '<div class="barrow"><span class="name">'+n+'</span><div class="bartrack"><div class="barfill" style="width:'+Math.min(p,100)+'%"></div></div><span class="pct">'+p+'%</span></div>'; }
 
 var VIEWS = {
-  executive: function () {
-    var h = mWorkforceHealth(), c = mCommercial(), t = mTurnover(), f = mFinancial(), ins = mInsights();
-    return '<h2 class="title">Dashboard Ejecutivo</h2><p class="subtitle">Inteligencia organizacional · '+h.total+' colaboradores activos · '+DB.employees.length+' totales</p>' +
-      '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-bottom:24px;">' +
-        kpi('Workforce Health', h.health, 'Salud organizacional', 'green') + kpi('Cumplimiento Comercial', c.overall + '%', fmtCOP(c.totalActual), 'blue') +
-        kpi('Rotación Histórica', t.overall + '%', t.totalRet + ' retiros', 'amber') + kpi('Impacto Económico', fmtCOP(f.economicImpact), f.atRisk + ' en riesgo', 'red') + '</div>' +
-      '<div class="grid" style="grid-template-columns:1fr 1fr;margin-bottom:24px;">' +
-        card('Componentes de Salud', bar('Motivación', h.motivation) + bar('Satisfacción', h.satisfaction) + bar('Compromiso', h.engagement) + bar('Bajo Estrés', 100 - h.stress) + bar('Sin Burnout', 100 - h.burnout)) +
-        card('🧠 Workforce Insights™', ins.map(function (i) { return '<div class="insight">✨ ' + i + '</div>'; }).join('')) + '</div>' +
-      card('Cumplimiento por Regional', c.byRegional.map(function (r) { return bar(r.name, r.achievement); }).join(''));
-  },
-  commercial: function () {
-    var c = mCommercial();
-    return '<h2 class="title">Productividad Comercial</h2><p class="subtitle">Análisis de cumplimiento de metas</p>' +
-      '<div class="grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:24px;">' + kpi('Cumplimiento General', c.overall + '%', '', 'blue') + kpi('Meta Total', fmtCOP(c.totalGoal), '', 'purple') + kpi('Ventas Acumuladas', fmtCOP(c.totalActual), '', 'green') + '</div>' +
-      '<div class="grid" style="grid-template-columns:1fr 1fr;margin-bottom:24px;">' + card('Por Regional', c.byRegional.map(function (r) { return bar(r.name, r.achievement); }).join('')) + card('Por Ciudad', c.byCity.map(function (r) { return bar(r.name, r.achievement); }).join('')) + '</div>' +
-      '<div class="grid" style="grid-template-columns:1fr 1fr;margin-bottom:24px;">' + card('Por Área', c.byArea.map(function (r) { return bar(r.name, r.achievement); }).join('')) + card('Por Equipo', c.byTeam.map(function (r) { return bar(r.name, r.achievement); }).join('')) + '</div>' +
-      '<div class="grid" style="grid-template-columns:1fr 1fr;">' + card('Por Cargo', c.byPosition.map(function (r) { return bar(r.name, r.achievement); }).join('')) + card('Por Jefe Directo', c.byManager.map(function (r) { return bar(r.name, r.achievement); }).join('')) + '</div>';
-  },
-  hr: function () {
-    var c = mCommercial();
-    var heat = {}; activeEmp().forEach(function (e) { var k = e.area || 'N/A'; if (!heat[k]) heat[k] = []; heat[k].push(e.stress); });
-    var leaderRank = {};
-    activeEmp().forEach(function (e) { var m = e.managerName || 'N/A'; if (!leaderRank[m]) leaderRank[m] = []; leaderRank[m].push(e.engagement); });
-    var lr = Object.keys(leaderRank).map(function (m) { return { name: m, score: avg(leaderRank[m].map(function (x) { return { e: x }; }), function (o) { return o.e; }), n: leaderRank[m].length }; }).sort(function (a, b) { return b.score - a.score; });
-    return '<h2 class="title">Recursos Humanos</h2><p class="subtitle">Heatmaps · Rankings · Análisis de equipos</p>' +
-      '<div class="grid" style="grid-template-columns:1fr 1fr;margin-bottom:24px;">' +
-        card('🏆 Ranking de Líderes (Engagement)', lr.map(function (l, i) { return '<div class="row"><span><span class="rank">#'+(i+1)+'</span>'+l.name+' ('+l.n+')</span><span style="font-weight:600;">'+l.score+'</span></div>'; }).join('')) +
-        card('🔥 Heatmap de Estrés por Área', Object.keys(heat).map(function (area) { var arr = heat[area]; var v = Math.round(arr.reduce(function (a, b) { return a + b; }, 0) / arr.length); var color = v > 60 ? '#ef4444' : v > 45 ? '#f59e0b' : '#10b981'; return '<div class="barrow"><span class="name">'+area+'</span><div style="flex:1;height:24px;border-radius:4px;background:'+color+';opacity:'+(0.4+v/170)+'"></div><span class="pct">'+v+'</span></div>'; }).join('')) + '</div>' +
-      '<div class="grid" style="grid-template-columns:1fr 1fr;">' + card('✅ Equipos con Mejor Desempeño', c.byTeam.slice(0, 5).map(function (r) { return bar(r.name, r.achievement); }).join('')) + card('⚠️ Equipos en Riesgo', c.byTeam.slice().reverse().slice(0, 5).map(function (r) { return bar(r.name, r.achievement); }).join('')) + '</div>';
-  },
-  retention: function () {
-    var t = mTurnover();
-    var atRisk = activeEmp().filter(function (e) { return e.retentionRisk >= 50; }).sort(function (a, b) { return b.retentionRisk - a.retentionRisk; }).slice(0, 20);
-    return '<h2 class="title">Retención &amp; Rotación</h2><p class="subtitle">Retention Risk Score™ · Predicción de abandono</p>' +
-      '<div class="grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px;">' + kpi('Rotación Total', t.overall + '%', '', 'red') + kpi('Retiros', t.totalRet, 'colaboradores', 'amber') + kpi('En Riesgo Alto', atRisk.length, 'requieren acción', 'purple') + kpi('Regional Crítica', t.byRegional[0] ? t.byRegional[0].name : '-', t.byRegional[0] ? t.byRegional[0].rate + '%' : '', 'blue') + '</div>' +
-      '<div class="grid" style="grid-template-columns:1fr 1fr;margin-bottom:24px;">' +
-        card('⚠️ Empleados en Riesgo de Abandono', '<div style="max-height:420px;overflow-y:auto;">' + atRisk.map(function (e) { return '<div class="risk-item"><div><div style="font-size:13px;font-weight:500;">'+e.fullName+'</div><div style="font-size:11px;color:#64748b;">'+e.position+' · '+e.area+' · '+e.regional+'</div></div><div style="display:flex;align-items:center;gap:12px;"><span class="badge" style="'+riskStyle(e.riskLevel)+'">'+e.riskLevel+'</span><span style="font-size:18px;font-weight:700;">'+e.retentionRisk+'</span></div></div>'; }).join('') + '</div>') +
-        card('📋 Ranking de Causales de Retiro', t.causal.map(function (c, i) { return '<div class="row"><span><span class="rank">#'+(i+1)+'</span>'+c.reason+'</span><span style="font-weight:600;">'+c.count+'</span></div>'; }).join('')) + '</div>' +
-      '<div class="grid" style="grid-template-columns:1fr 1fr;">' + card('Rotación por Regional', t.byRegional.map(function (r) { return bar(r.name + ' ('+r.ex+'/'+r.t+')', r.rate); }).join('')) + card('Rotación por Cargo', t.byPosition.map(function (r) { return bar(r.name, r.rate); }).join('')) + '</div>';
-  },
-  financial: function () {
-    var f = mFinancial();
-    return '<h2 class="title">Dashboard Financiero</h2><p class="subtitle">Impacto económico de la rotación</p>' +
-      '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-bottom:24px;">' +
-        kpi('Costo de Rotación', fmtCOP(f.turnoverCost), '', 'red') + kpi('Costo de Reemplazo', fmtCOP(f.replacementCost), '', 'amber') + kpi('Costo Capacitación', fmtCOP(f.trainingCost), '', 'purple') +
-        kpi('Productividad Perdida', fmtCOP(f.productivityLoss), '', 'blue') + kpi('Riesgo Financiero', fmtCOP(f.financialRisk), f.atRisk + ' empleados', 'red') + kpi('ROI de Retención', f.roi + '%', 'Retorno estimado', 'green') + '</div>' +
-      card('Impacto Económico Total', '<p style="font-size:32px;font-weight:700;">' + fmtCOP(f.economicImpact) + '</p><p style="font-size:13px;color:#64748b;margin-top:8px;">Suma de costos de rotación histórica + riesgo proyectado de abandono de los ' + f.atRisk + ' colaboradores en riesgo alto/crítico.</p>');
-  },
-  coach: function () {
-    setTimeout(scrollChat, 30);
-    return '<div style="max-width:760px;margin:0 auto;"><h2 class="title">TUPARCH3 AI Coach™</h2><p class="subtitle">Tu coach organizacional personal · Confidencial</p>' +
-      '<div id="chatBox" style="height:50vh;overflow-y:auto;border:1px solid #e2e8f0;border-radius:12px;padding:16px;background:#fff;"></div>' +
-      '<div style="display:flex;gap:8px;margin-top:12px;"><input id="chatInput" placeholder="Escribe tu mensaje..." style="flex:1;border:1px solid #e2e8f0;border-radius:10px;padding:12px;font-size:14px;"><button id="chatSend" style="width:48px;border:none;border-radius:10px;background:#4f46e5;color:#fff;cursor:pointer;font-size:18px;">➤</button></div></div>';
-  },
-  import: function () {
-    return '<div style="max-width:600px;margin:0 auto;"><h2 class="title">Importación Masiva</h2><p class="subtitle">Carga Excel (.xlsx) para reemplazar o ampliar la data actual.</p>' +
-      card('', '<label class="dropzone"><svg width="40" height="40" fill="none" stroke="#6366f1" stroke-width="1.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg><span id="fileName" style="font-size:14px;font-weight:500;">Selecciona archivo .xlsx</span><input id="fileInput" type="file" accept=".xlsx,.xls" style="display:none;"></label><button id="importBtn" class="btn-primary" style="margin-top:16px;opacity:.5;" disabled>Importar y Procesar</button>') +
-      '<button onclick="resetData()" style="margin-top:12px;width:100%;border:1px solid #e2e8f0;background:#fff;border-radius:8px;padding:10px;font-size:13px;cursor:pointer;">🔄 Restaurar data demo original (300 empleados)</button>' +
-      '<div id="importResult" style="margin-top:24px;"></div></div>';
-  }
+  executive: function () { var h = mWorkforceHealth(), c = mCommercial(), t = mTurnover(), f = mFinancial(), ins = mInsights(); return '<h2 class="title">Dashboard Ejecutivo</h2><p class="subtitle">Inteligencia organizacional · '+h.total+' activos · '+DB.employees.length+' totales</p><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-bottom:24px;">'+kpi('Workforce Health', h.health, 'Salud organizacional', 'green')+kpi('Cumplimiento Comercial', c.overall + '%', fmtCOP(c.totalActual), 'blue')+kpi('Rotación Histórica', t.overall + '%', t.totalRet + ' retiros', 'amber')+kpi('Impacto Económico', fmtCOP(f.economicImpact), f.atRisk + ' en riesgo', 'red')+'</div><div class="grid" style="grid-template-columns:1fr 1fr;margin-bottom:24px;">'+card('Componentes de Salud', bar('Motivación', h.motivation) + bar('Satisfacción', h.satisfaction) + bar('Compromiso', h.engagement) + bar('Bajo Estrés', 100 - h.stress) + bar('Sin Burnout', 100 - h.burnout))+card('🧠 Workforce Insights™', ins.map(function (i) { return '<div class="insight">✨ ' + i + '</div>'; }).join(''))+'</div>'+card('Cumplimiento por Regional', c.byRegional.map(function (r) { return bar(r.name, r.achievement); }).join('')); },
+  commercial: function () { var c = mCommercial(); return '<h2 class="title">Productividad Comercial</h2><p class="subtitle">Análisis de cumplimiento de metas</p><div class="grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:24px;">'+kpi('Cumplimiento General', c.overall + '%', '', 'blue')+kpi('Meta Total', fmtCOP(c.totalGoal), '', 'purple')+kpi('Ventas Acumuladas', fmtCOP(c.totalActual), '', 'green')+'</div><div class="grid" style="grid-template-columns:1fr 1fr;margin-bottom:24px;">'+card('Por Regional', c.byRegional.map(function (r) { return bar(r.name, r.achievement); }).join(''))+card('Por Ciudad', c.byCity.map(function (r) { return bar(r.name, r.achievement); }).join(''))+'</div><div class="grid" style="grid-template-columns:1fr 1fr;margin-bottom:24px;">'+card('Por Área', c.byArea.map(function (r) { return bar(r.name, r.achievement); }).join(''))+card('Por Equipo', c.byTeam.map(function (r) { return bar(r.name, r.achievement); }).join(''))+'</div><div class="grid" style="grid-template-columns:1fr 1fr;">'+card('Por Cargo', c.byPosition.map(function (r) { return bar(r.name, r.achievement); }).join(''))+card('Por Jefe Directo', c.byManager.map(function (r) { return bar(r.name, r.achievement); }).join(''))+'</div>'; },
+  hr: function () { var c = mCommercial(); var heat = {}; activeEmp().forEach(function (e) { var k = e.area || 'N/A'; if (!heat[k]) heat[k] = []; heat[k].push(e.stress); }); var lr0 = {}; activeEmp().forEach(function (e) { var m = e.managerName || 'N/A'; if (!lr0[m]) lr0[m] = []; lr0[m].push(e.engagement); }); var lr = Object.keys(lr0).map(function (m) { return { name: m, score: Math.round(lr0[m].reduce(function (a, b) { return a + b; }, 0) / lr0[m].length), n: lr0[m].length }; }).sort(function (a, b) { return b.score - a.score; }); return '<h2 class="title">Recursos Humanos</h2><p class="subtitle">Heatmaps · Rankings · Análisis de equipos</p><div class="grid" style="grid-template-columns:1fr 1fr;margin-bottom:24px;">'+card('🏆 Ranking de Líderes (Engagement)', lr.map(function (l, i) { return '<div class="row"><span><span class="rank">#'+(i+1)+'</span>'+l.name+' ('+l.n+')</span><span style="font-weight:600;">'+l.score+'</span></div>'; }).join(''))+card('🔥 Heatmap de Estrés por Área', Object.keys(heat).map(function (area) { var arr = heat[area]; var v = Math.round(arr.reduce(function (a, b) { return a + b; }, 0) / arr.length); var color = v > 60 ? '#ef4444' : v > 45 ? '#f59e0b' : '#10b981'; return '<div class="barrow"><span class="name">'+area+'</span><div style="flex:1;height:24px;border-radius:4px;background:'+color+';opacity:'+(0.4+v/170)+'"></div><span class="pct">'+v+'</span></div>'; }).join(''))+'</div><div class="grid" style="grid-template-columns:1fr 1fr;">'+card('✅ Equipos con Mejor Desempeño', c.byTeam.slice(0, 5).map(function (r) { return bar(r.name, r.achievement); }).join(''))+card('⚠️ Equipos en Riesgo', c.byTeam.slice().reverse().slice(0, 5).map(function (r) { return bar(r.name, r.achievement); }).join(''))+'</div>'; },
+  retention: function () { var t = mTurnover(); var atRisk = activeEmp().filter(function (e) { return e.retentionRisk >= 50; }).sort(function (a, b) { return b.retentionRisk - a.retentionRisk; }).slice(0, 20); return '<h2 class="title">Retención &amp; Rotación</h2><p class="subtitle">Retention Risk Score™ · Predicción de abandono</p><div class="grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px;">'+kpi('Rotación Total', t.overall + '%', '', 'red')+kpi('Retiros', t.totalRet, 'colaboradores', 'amber')+kpi('En Riesgo Alto', atRisk.length, 'requieren acción', 'purple')+kpi('Regional Crítica', t.byRegional[0] ? t.byRegional[0].name : '-', t.byRegional[0] ? t.byRegional[0].rate + '%' : '', 'blue')+'</div><div class="grid" style="grid-template-columns:1fr 1fr;margin-bottom:24px;">'+card('⚠️ Empleados en Riesgo de Abandono', '<div style="max-height:420px;overflow-y:auto;">' + atRisk.map(function (e) { return '<div class="risk-item"><div><div style="font-size:13px;font-weight:500;">'+e.fullName+'</div><div style="font-size:11px;color:#64748b;">'+e.position+' · '+e.area+' · '+e.regional+'</div></div><div style="display:flex;align-items:center;gap:12px;"><span class="badge" style="'+riskStyle(e.riskLevel)+'">'+e.riskLevel+'</span><span style="font-size:18px;font-weight:700;">'+e.retentionRisk+'</span></div></div>'; }).join('') + '</div>')+card('📋 Ranking de Causales de Retiro', t.causal.map(function (c, i) { return '<div class="row"><span><span class="rank">#'+(i+1)+'</span>'+c.reason+'</span><span style="font-weight:600;">'+c.count+'</span></div>'; }).join(''))+'</div><div class="grid" style="grid-template-columns:1fr 1fr;">'+card('Rotación por Regional', t.byRegional.map(function (r) { return bar(r.name + ' ('+r.ex+'/'+r.t+')', r.rate); }).join(''))+card('Rotación por Cargo', t.byPosition.map(function (r) { return bar(r.name, r.rate); }).join(''))+'</div>'; },
+  financial: function () { var f = mFinancial(); return '<h2 class="title">Dashboard Financiero</h2><p class="subtitle">Impacto económico de la rotación</p><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-bottom:24px;">'+kpi('Costo de Rotación', fmtCOP(f.turnoverCost), '', 'red')+kpi('Costo de Reemplazo', fmtCOP(f.replacementCost), '', 'amber')+kpi('Costo Capacitación', fmtCOP(f.trainingCost), '', 'purple')+kpi('Productividad Perdida', fmtCOP(f.productivityLoss), '', 'blue')+kpi('Riesgo Financiero', fmtCOP(f.financialRisk), f.atRisk + ' empleados', 'red')+kpi('ROI de Retención', f.roi + '%', 'Retorno estimado', 'green')+'</div>'+card('Impacto Económico Total', '<p style="font-size:32px;font-weight:700;">' + fmtCOP(f.economicImpact) + '</p><p style="font-size:13px;color:#64748b;margin-top:8px;">Suma de costos de rotación histórica + riesgo proyectado de abandono de los ' + f.atRisk + ' colaboradores en riesgo.</p>'); },
+  import: function () { return '<div style="max-width:600px;margin:0 auto;"><h2 class="title">Importación Masiva</h2><p class="subtitle">Carga Excel (.xlsx) para reemplazar la data actual.</p>'+card('', '<label class="dropzone"><svg width="40" height="40" fill="none" stroke="#6366f1" stroke-width="1.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg><span id="fileName" style="font-size:14px;font-weight:500;">Selecciona archivo .xlsx</span><input id="fileInput" type="file" accept=".xlsx,.xls" style="display:none;"></label><button id="importBtn" class="btn-primary" style="margin-top:16px;opacity:.5;background:#4f46e5;" disabled>Importar y Procesar</button>')+'<button onclick="resetData()" style="margin-top:12px;width:100%;border:1px solid #e2e8f0;background:#fff;border-radius:8px;padding:10px;font-size:13px;cursor:pointer;">🔄 Restaurar data demo original</button><div id="importResult" style="margin-top:24px;"></div></div>'; }
 };
 
 window.resetData = function () { localStorage.removeItem('t3db'); loadRealData(); alert('Data restaurada: ' + DB.employees.length + ' empleados'); go('executive'); };
 
-/* ============ NAV ============ */
-var NAV = [{ id:'executive', label:'Dashboard Ejecutivo' }, { id:'commercial', label:'Productividad Comercial' }, { id:'hr', label:'Recursos Humanos' }, { id:'retention', label:'Retención & Rotación' }, { id:'financial', label:'Dashboard Financiero' }, { id:'coach', label:'AI Coach™' }, { id:'import', label:'Importar Datos' }];
-function renderNav() {
-  var nav = document.getElementById('nav');
-  nav.innerHTML = NAV.map(function (i) { return '<button class="navbtn" data-view="' + i.id + '">' + i.label + '</button>'; }).join('');
-  var btns = nav.querySelectorAll('.navbtn');
-  for (var k = 0; k < btns.length; k++) btns[k].addEventListener('click', function () { go(this.getAttribute('data-view')); });
-}
-function go(view) {
-  var btns = document.querySelectorAll('.navbtn');
-  for (var k = 0; k < btns.length; k++) btns[k].classList.toggle('active', btns[k].getAttribute('data-view') === view);
-  document.getElementById('main').innerHTML = VIEWS[view]();
-  if (view === 'coach') bindCoach();
-  if (view === 'import') bindImport();
-}
+/* ============ NAV EMPRESA ============ */
+var NAV = [{ id:'executive', label:'Dashboard Ejecutivo' }, { id:'commercial', label:'Productividad Comercial' }, { id:'hr', label:'Recursos Humanos' }, { id:'retention', label:'Retención & Rotación' }, { id:'financial', label:'Dashboard Financiero' }, { id:'import', label:'Importar Datos' }];
+function renderNav() { var nav = document.getElementById('nav'); nav.innerHTML = NAV.map(function (i) { return '<button class="navbtn" data-view="' + i.id + '">' + i.label + '</button>'; }).join(''); var btns = nav.querySelectorAll('.navbtn'); for (var k = 0; k < btns.length; k++) btns[k].addEventListener('click', function () { go(this.getAttribute('data-view')); }); }
+function go(view) { var btns = document.querySelectorAll('.navbtn'); for (var k = 0; k < btns.length; k++) btns[k].classList.toggle('active', btns[k].getAttribute('data-view') === view); document.getElementById('main').innerHTML = VIEWS[view](); if (view === 'import') bindImport(); }
 
-/* ============ AI COACH ============ */
-var chatHistory = [{ role: 'assistant', content: 'Hola, soy TUPARCH3 AI Coach™. Estoy aquí para acompañarte en tu desarrollo y bienestar laboral. ¿En qué puedo ayudarte hoy?' }];
-function scrollChat() {
-  var box = document.getElementById('chatBox'); if (!box) return;
-  box.innerHTML = chatHistory.map(function (m) { var u = m.role === 'user'; return '<div style="display:flex;justify-content:'+(u?'flex-end':'flex-start')+';margin-bottom:12px;"><div style="max-width:80%;border-radius:14px;padding:10px 14px;font-size:14px;background:'+(u?'#4f46e5;color:#fff':'#f1f5f9;color:#0f172a')+';">'+m.content+'</div></div>'; }).join('');
-  box.scrollTop = box.scrollHeight;
-}
-function coachReply(msg) {
-  var t = msg.toLowerCase();
-  if (/estr[eé]s|presi|agobi|satura/.test(t)) return 'Entiendo que sientes una carga importante. ¿Qué situación específica te genera más presión esta semana? Te propongo identificar las 3 tareas de mayor impacto y bloquear 2 horas sin interrupciones. ¿Cuál sería la primera?';
-  if (/renunci|irme|dejar|oferta/.test(t)) return 'Gracias por la confianza. Antes de decidir, analicemos: ¿qué te llevaría a quedarte y qué te empuja a salir? ¿Qué cambio concreto mejoraría tu situación actual?';
-  if (/motiva|desanim|sin ganas|aburri/.test(t)) return 'La motivación fluctúa, reconocerlo es el primer paso. ¿Qué parte de tu trabajo te hacía sentir orgulloso hace unos meses? Recuperemos un pequeño logro diario. ¿Qué lograste hoy?';
-  if (/jefe|l[ií]der|equipo/.test(t)) return 'El liderazgo impacta el desempeño. ¿Qué comportamiento específico te gustaría cambiar? Diseñemos una conversación asertiva. ¿Qué necesitas comunicar?';
-  if (/meta|venta|objetivo|cumplim/.test(t)) return 'Las metas pueden sentirse retadoras. ¿En qué etapa se estancan tus negocios? Enfócate en los 3 clientes con mayor probabilidad de cierre esta semana. ¿Quiénes son?';
-  if (/tiempo|organiz|prioriz/.test(t)) return 'Organizar el tiempo reduce el estrés. ¿Qué tarea importante pero no urgente estás postergando? Agéndala como primera del día. ¿Cuál es?';
-  return 'Gracias por compartirlo. Cuéntame más: ¿qué te gustaría mejorar o resolver en tu día a día laboral? Estoy aquí para escucharte y construir contigo un plan de acción.';
-}
-function bindCoach() {
-  var send = document.getElementById('chatSend'), input = document.getElementById('chatInput');
-  function doSend() { var msg = input.value.trim(); if (!msg) return; chatHistory.push({ role: 'user', content: msg }); input.value = ''; scrollChat(); setTimeout(function () { chatHistory.push({ role: 'assistant', content: coachReply(msg) }); scrollChat(); }, 500); }
-  send.addEventListener('click', doSend);
-  input.addEventListener('keydown', function (e) { if (e.key === 'Enter') doSend(); });
-}
+/* ============ AI COACH (Portal Colaborador) ============ */
+var chatHistory = [{ role: 'assistant', content: 'Hola, soy TUPARCH3 AI Coach™. Estoy aquí para acompañarte de forma confidencial en tu desarrollo y bienestar laboral. ¿En qué puedo ayudarte hoy?' }];
+function scrollChat2() { var box = document.getElementById('chatBox2'); if (!box) return; box.innerHTML = chatHistory.map(function (m) { var u = m.role === 'user'; return '<div style="display:flex;justify-content:'+(u?'flex-end':'flex-start')+';margin-bottom:12px;"><div style="max-width:80%;border-radius:14px;padding:10px 14px;font-size:14px;background:'+(u?'#10b981;color:#fff':'#f1f5f9;color:#0f172a')+';">'+m.content+'</div></div>'; }).join(''); box.scrollTop = box.scrollHeight; }
+function coachReply(msg) { var t = msg.toLowerCase(); if (/estr[eé]s|presi|agobi|satura/.test(t)) return 'Entiendo que sientes una carga importante. ¿Qué situación específica te genera más presión esta semana? Te propongo identificar las 3 tareas de mayor impacto y bloquear 2 horas sin interrupciones. ¿Cuál sería la primera?'; if (/renunci|irme|dejar|oferta/.test(t)) return 'Gracias por la confianza. Antes de decidir, analicemos juntos: ¿qué te llevaría a quedarte y qué te empuja a salir? ¿Qué cambio concreto mejoraría tu situación actual?'; if (/motiva|desanim|sin ganas|aburri/.test(t)) return 'La motivación fluctúa, y reconocerlo es el primer paso. ¿Qué parte de tu trabajo te hacía sentir orgulloso hace unos meses? Recuperemos un pequeño logro diario. ¿Qué lograste hoy, por pequeño que sea?'; if (/jefe|l[ií]der|equipo/.test(t)) return 'El liderazgo impacta directamente el desempeño. ¿Qué comportamiento específico te gustaría cambiar? Diseñemos una conversación asertiva. ¿Qué necesitas comunicar y qué resultado buscas?'; if (/meta|venta|objetivo|cumplim/.test(t)) return 'Las metas pueden sentirse retadoras. ¿En qué etapa se estancan tus negocios? Enfócate en los 3 clientes con mayor probabilidad de cierre esta semana. ¿Quiénes son?'; if (/tiempo|organiz|prioriz/.test(t)) return 'Organizar el tiempo reduce el estrés. ¿Qué tarea importante pero no urgente estás postergando? Agéndala como primera del día. ¿Cuál es?'; return 'Gracias por compartirlo. Cuéntame un poco más: ¿qué te gustaría mejorar o resolver en tu día a día laboral? Estoy aquí para escucharte y construir contigo un plan de acción.'; }
+function bindCoach2() { var send = document.getElementById('chatSend2'), input = document.getElementById('chatInput2'); function doSend() { var msg = input.value.trim(); if (!msg) return; chatHistory.push({ role: 'user', content: msg }); input.value = ''; scrollChat2(); setTimeout(function () { chatHistory.push({ role: 'assistant', content: coachReply(msg) }); scrollChat2(); }, 500); } send.addEventListener('click', doSend); input.addEventListener('keydown', function (e) { if (e.key === 'Enter') doSend(); }); }
+window.quickTopic = function (text) { document.getElementById('chatInput2').value = text; document.getElementById('chatSend2').click(); };
 
 /* ============ IMPORT EXCEL ============ */
 var COLMAP = { 'ID Empleado':'id', 'Nombre Completo':'fullName', 'Cédula':'cedula', 'Correo Corporativo':'email', 'Ciudad':'city', 'Regional':'regional', 'Área':'area', 'Equipo':'team', 'Cargo':'position', 'Nivel de Cargo':'level', 'Jefe Directo':'managerName', 'Fecha de Ingreso':'hireDate', 'Fecha de Retiro':'exitDate', 'Estado':'status', 'Tipo de Contrato':'contractType', 'Salario Base Mensual':'baseSalary', 'Meta de Ventas Mensual':'salesGoal', 'Ventas Acumuladas Mes':'salesAccumulated', 'Motivo de Retiro':'exitReason', 'Cargo Crítico':'isCritical' };
 var pendingFile = null;
-function bindImport() {
-  var fi = document.getElementById('fileInput'), btn = document.getElementById('importBtn');
-  fi.addEventListener('change', function (e) { pendingFile = e.target.files[0]; document.getElementById('fileName').textContent = pendingFile ? pendingFile.name : 'Selecciona archivo .xlsx'; btn.disabled = !pendingFile; btn.style.opacity = pendingFile ? '1' : '.5'; });
-  btn.addEventListener('click', function () {
-    if (!pendingFile) return;
-    var reader = new FileReader();
-    reader.onload = function (ev) {
-      var wb = XLSX.read(ev.target.result, { type: 'array' });
-      var rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
-      DB = { employees: [], users: [] };
-      DB.users.push({ email: 'admin@empresa.com', pass: '1023456789', role: 'ADMIN', name: 'Administrador' });
-      DB.users.push({ email: 'rrhh@empresa.com', pass: '1023456789', role: 'RRHH', name: 'Talento Humano' });
-      var created = 0;
-      rows.forEach(function (row) {
-        var r = {}; for (var c in COLMAP) r[COLMAP[c]] = row[c];
-        if (!r.email || !r.cedula) return;
-        var status = /inactivo|retir/i.test(String(r.status)) ? 'RETIRADO' : 'ACTIVO';
-        var e = { id: String(r.id || r.cedula), fullName: String(r.fullName || '').trim(), cedula: String(r.cedula).trim(), email: String(r.email).toLowerCase().trim(), city: r.city || '', regional: r.regional || '', area: r.area || '', team: r.team || '', position: r.position || '', level: r.level || '', managerName: r.managerName || '', hireDate: r.hireDate || null, exitDate: r.exitDate || null, status: status, contractType: r.contractType || '', baseSalary: num(r.baseSalary), salesGoal: num(r.salesGoal), salesAccumulated: num(r.salesAccumulated), exitReason: r.exitReason || null, isCritical: /sí|si|true|1/i.test(String(r.isCritical)), managerEmail: null };
-        computeScores(e); DB.employees.push(e); created++;
-        DB.users.push({ email: e.email, pass: e.cedula, role: e.level === 'Líder' ? 'LIDER' : 'COLABORADOR', name: e.fullName });
-      });
-      saveDB();
-      var leaders = DB.users.filter(function (u) { return u.role === 'LIDER'; }).length;
-      document.getElementById('importResult').innerHTML = card('✅ Importación Completada', '<div class="grid" style="grid-template-columns:1fr 1fr;"><div class="stat-box"><div class="l">Empleados importados</div><div class="v">'+created+'</div></div><div class="stat-box"><div class="l">Líderes detectados</div><div class="v">'+leaders+'</div></div></div><button onclick="go(\'executive\')" class="btn-primary" style="margin-top:16px;">Ver Dashboard →</button>');
-    };
-    reader.readAsArrayBuffer(pendingFile);
-  });
+function bindImport() { var fi = document.getElementById('fileInput'), btn = document.getElementById('importBtn'); fi.addEventListener('change', function (e) { pendingFile = e.target.files[0]; document.getElementById('fileName').textContent = pendingFile ? pendingFile.name : 'Selecciona archivo .xlsx'; btn.disabled = !pendingFile; btn.style.opacity = pendingFile ? '1' : '.5'; }); btn.addEventListener('click', function () { if (!pendingFile) return; var reader = new FileReader(); reader.onload = function (ev) { var wb = XLSX.read(ev.target.result, { type: 'array' }); var rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' }); DB = { employees: [], users: [] }; DB.users.push({ email: 'admin@empresa.com', pass: '1023456789', role: 'ADMIN', name: 'Administrador' }); DB.users.push({ email: 'rrhh@empresa.com', pass: '1023456789', role: 'RRHH', name: 'Talento Humano' }); var created = 0; rows.forEach(function (row) { var r = {}; for (var c in COLMAP) r[COLMAP[c]] = row[c]; if (!r.email || !r.cedula) return; var status = /inactivo|retir/i.test(String(r.status)) ? 'RETIRADO' : 'ACTIVO'; var e = { id: String(r.id || r.cedula), fullName: String(r.fullName || '').trim(), cedula: String(r.cedula).trim(), email: String(r.email).toLowerCase().trim(), city: r.city || '', regional: r.regional || '', area: r.area || '', team: r.team || '', position: r.position || '', level: r.level || '', managerName: r.managerName || '', hireDate: r.hireDate || null, exitDate: r.exitDate || null, status: status, contractType: r.contractType || '', baseSalary: num(r.baseSalary), salesGoal: num(r.salesGoal), salesAccumulated: num(r.salesAccumulated), exitReason: r.exitReason || null, isCritical: /sí|si|true|1/i.test(String(r.isCritical)), managerEmail: null }; computeScores(e); DB.employees.push(e); created++; DB.users.push({ email: e.email, pass: e.cedula, role: e.level === 'Líder' ? 'LIDER' : 'COLABORADOR', name: e.fullName }); }); saveDB(); var leaders = DB.users.filter(function (u) { return u.role === 'LIDER'; }).length; document.getElementById('importResult').innerHTML = card('✅ Importación Completada', '<div class="grid" style="grid-template-columns:1fr 1fr;"><div class="stat-box"><div class="l">Empleados importados</div><div class="v">'+created+'</div></div><div class="stat-box"><div class="l">Líderes detectados</div><div class="v">'+leaders+'</div></div></div><button onclick="go(\'executive\')" class="btn-primary" style="margin-top:16px;background:#4f46e5;">Ver Dashboard →</button>'); }; reader.readAsArrayBuffer(pendingFile); }); }
+
+/* ============ FLUJO DE PORTALES ============ */
+function goToLogin(portal) {
+  SELECTED_PORTAL = portal;
+  document.getElementById('portalSelect').style.display = 'none';
+  var login = document.getElementById('login');
+  login.style.display = 'flex';
+  var isEmpresa = portal === 'empresa';
+  // Estilos según portal
+  login.style.background = isEmpresa ? 'linear-gradient(135deg,#0f172a,#1e1b4b,#0c4a6e)' : 'linear-gradient(135deg,#064e3b,#065f46,#0c4a6e)';
+  var logo = document.getElementById('loginLogo');
+  logo.style.background = isEmpresa ? 'linear-gradient(135deg,#4f46e5,#9333ea)' : 'linear-gradient(135deg,#10b981,#059669)';
+  logo.innerHTML = isEmpresa
+    ? '<svg width="28" height="28" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/></svg>'
+    : '<svg width="28" height="28" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>';
+  var pn = document.getElementById('portalName');
+  pn.textContent = isEmpresa ? '🏢 PORTAL EMPRESA' : '💬 PORTAL COLABORADOR';
+  pn.style.background = isEmpresa ? '#4f46e519' : '#10b98119';
+  pn.style.color = isEmpresa ? '#a5b4fc' : '#6ee7b7';
+  var btn = document.getElementById('loginBtn');
+  btn.style.background = isEmpresa ? 'linear-gradient(to right,#4f46e5,#9333ea)' : 'linear-gradient(to right,#10b981,#059669)';
+  document.getElementById('loginHint').textContent = isEmpresa
+    ? 'Demo Empresa: admin@empresa.com / 1023456789'
+    : 'Ingresa con tu correo corporativo y tu cédula';
+  // Prellenar demo para empresa
+  document.getElementById('email').value = isEmpresa ? 'admin@empresa.com' : '';
+  document.getElementById('pass').value = isEmpresa ? '1023456789' : '';
+  document.getElementById('loginErr').style.display = 'none';
 }
 
-/* ============ AUTH / INIT ============ */
-function startApp() {
+function backToPortal() {
   document.getElementById('login').style.display = 'none';
+  document.getElementById('portalSelect').style.display = 'flex';
+}
+
+/* ============ AUTH ============ */
+function isCompanyRole(role) { return ['ADMIN', 'RRHH', 'TALENTO_HUMANO', 'PRESIDENCIA', 'GERENCIA', 'DIRECTOR_COMERCIAL', 'OPERACIONES'].indexOf(role) >= 0; }
+
+function startCompanyApp() {
+  document.getElementById('login').style.display = 'none';
+  document.getElementById('coachApp').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   document.getElementById('userName').textContent = CURRENT.name;
   renderNav(); go('executive');
 }
+function startCoachApp() {
+  document.getElementById('login').style.display = 'none';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('coachApp').style.display = 'block';
+  document.getElementById('coachUserName').textContent = CURRENT.name;
+  document.getElementById('coachWelcomeName').textContent = CURRENT.name.split(' ')[0];
+  bindCoach2(); scrollChat2();
+}
+
 function init() {
   loadDB();
   document.getElementById('loginForm').addEventListener('submit', function (e) {
@@ -414,9 +371,28 @@ function init() {
     for (var i = 0; i < DB.users.length; i++) if (DB.users[i].email === email && DB.users[i].pass === pass) { u = DB.users[i]; break; }
     var err = document.getElementById('loginErr');
     if (!u) { err.textContent = 'Credenciales inválidas'; err.style.display = 'block'; return; }
-    CURRENT = u; startApp();
+
+    // Validar que el rol corresponda al portal seleccionado
+    if (SELECTED_PORTAL === 'empresa') {
+      if (!isCompanyRole(u.role)) {
+        err.textContent = 'Esta cuenta es de colaborador. Usa el Portal Colaborador.';
+        err.style.display = 'block'; return;
+      }
+      CURRENT = u; startCompanyApp();
+    } else {
+      // Portal colaborador: cualquier usuario puede entrar al coach
+      CURRENT = u; startCoachApp();
+    }
   });
-  document.getElementById('logoutBtn').addEventListener('click', function () { CURRENT = null; document.getElementById('app').style.display = 'none'; document.getElementById('login').style.display = 'flex'; });
+  document.getElementById('logoutBtn').addEventListener('click', logout);
+  document.getElementById('coachLogoutBtn').addEventListener('click', logout);
+}
+function logout() {
+  CURRENT = null; SELECTED_PORTAL = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('coachApp').style.display = 'none';
+  document.getElementById('login').style.display = 'none';
+  document.getElementById('portalSelect').style.display = 'flex';
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 </script>
