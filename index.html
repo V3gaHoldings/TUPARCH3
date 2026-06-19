@@ -3,252 +3,346 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TUPARCH3™ — Configurador</title>
+<title>TUPARCH3™ — Workforce Intelligence</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>tailwind.config={darkMode:'class'}</script>
 <style>
-body{font-family:-apple-system,system-ui,sans-serif}
+body{font-family:-apple-system,system-ui,'Segoe UI',sans-serif}
 .fade-in{animation:f .4s ease}@keyframes f{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
 ::-webkit-scrollbar{width:8px}::-webkit-scrollbar-thumb{background:#6366f1;border-radius:8px}
 .glow{box-shadow:0 0 50px rgba(99,102,241,.18)}
+.typing span{animation:blink 1.4s infinite}.typing span:nth-child(2){animation-delay:.2s}.typing span:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,60%,100%{opacity:.3}30%{opacity:1}}
 </style>
 </head>
 <body class="bg-zinc-950 text-zinc-100">
 <div id="app"></div>
 <script>
 /* ============================================================
-   TUPARCH3 — Configurador con datos editables (localStorage)
+   TUPARCH3 — Chatbot IA que extrae datos reales → Dashboard
+   Flujo: empleado conversa → IA responde + extrae métricas →
+   se guardan → dashboard agregado (anonimizado) se llena solo
 ============================================================ */
-let OPENAI_API_KEY = localStorage.getItem('t3_key')||"";
 
-/* ---------- DATOS POR DEFECTO ---------- */
-const DEFAULT={
-  company:{name:"Mi Empresa",slug:"miempresa",industry:"Tecnología",avgSalary:55000,turnover:18,contact:"Director"},
-  teams:[
-    {name:"Equipo A",workpulse:72,burnout:38,retention:22,size:14},
-    {name:"Equipo B",workpulse:54,burnout:61,retention:48,size:9},
-    {name:"Equipo C",workpulse:43,burnout:74,retention:65,size:11},
-  ],
-  insights:[
-    {sev:"critical",title:"Riesgo de burnout detectado",body:"Un equipo muestra burnout elevado. Requiere atención inmediata."},
-    {sev:"warning",title:"Caída de motivación",body:"Tendencia a la baja en bienestar este mes."},
-  ]
-};
-function loadData(){const s=localStorage.getItem('t3_data');return s?JSON.parse(s):JSON.parse(JSON.stringify(DEFAULT));}
-function saveData(d){localStorage.setItem('t3_data',JSON.stringify(d));}
-let DATA=loadData();
-let SESSION=null,CURRENT="home";
+/* ---------- ESTADO / PERSISTENCIA ---------- */
+let KEY = localStorage.getItem('t3_key') || "";
+function db(){ return JSON.parse(localStorage.getItem('t3_db') || '{"company":"Mi Empresa","records":[]}'); }
+function saveDB(d){ localStorage.setItem('t3_db', JSON.stringify(d)); }
+function pushRecord(r){ const d=db(); d.records.push(r); saveDB(d); }
+let SESSION=null, CURRENT="home", chartRefs=[];
 
-/* ---------- ROI ---------- */
+/* ---------- TEMAS ---------- */
+const TOPICS={burnout:"Burnout",leadership:"Liderazgo",workload:"Carga laboral",motivation:"Motivación",communication:"Comunicación",balance:"Equilibrio vida-trabajo",growth:"Desarrollo"};
+
+/* ============================================================
+   MOTOR IA — responde humano + extrae datos estructurados
+============================================================ */
+async function aiTurn(message, history){
+  if(KEY){
+    try{
+      // 1) Respuesta empática
+      const chat = await fetch("https://api.openai.com/v1/chat/completions",{
+        method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+KEY},
+        body:JSON.stringify({model:"gpt-4o-mini",temperature:0.7,messages:[
+          {role:"system",content:"Eres TUPARCH3 Coach, un asistente de bienestar laboral cálido y empático. NO eres terapeuta ni médico. Conversa de forma natural, breve (2-3 frases), haz preguntas abiertas para entender cómo se siente la persona en su trabajo respecto a estrés, carga, motivación, liderazgo y equilibrio. Termina a veces con una micro-recomendación accionable. Español."},
+          ...history,{role:"user",content:message}]})});
+      const cd=await chat.json();
+      const reply=cd.choices[0].message.content;
+
+      // 2) Extracción de datos (silenciosa)
+      const ext = await fetch("https://api.openai.com/v1/chat/completions",{
+        method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+KEY},
+        body:JSON.stringify({model:"gpt-4o-mini",temperature:0,response_format:{type:"json_object"},messages:[
+          {role:"system",content:`Analiza el mensaje del empleado en contexto laboral. Devuelve SOLO JSON:
+{"stress":0-10,"motivation":0-10,"satisfaction":0-10,"burnout_risk":0-100,"topic":"burnout|leadership|workload|motivation|communication|balance|growth","sentiment":"positive|neutral|negative","confidence":0-1}
+Si el mensaje no da info suficiente sobre algún campo, estima conservador (5 en escalas, 30 en burnout). confidence = qué tan claro fue el mensaje.`},
+          {role:"user",content:message}]})});
+      const ed=await ext.json();
+      let data; try{ data=JSON.parse(ed.choices[0].message.content); }catch(e){ data=fallbackExtract(message); }
+      return {reply, data};
+    }catch(e){ return {reply:"⚠️ Hubo un problema con la conexión IA. Revisa tu clave en Configuración. Mientras, sigo en modo demo.", data:fallbackExtract(message)}; }
+  }
+  // MODO DEMO (sin clave) — respuesta + extracción por reglas
+  return {reply:demoReply(message), data:fallbackExtract(message)};
+}
+
+/* ---------- Extracción por reglas (fallback / demo) ---------- */
+function fallbackExtract(msg){
+  const m=msg.toLowerCase();
+  let stress=5,motivation=5,satisfaction=5,topic="communication",sentiment="neutral";
+  const neg=/(estr|agot|cansad|quemad|hart|presi|agobi|abrumad|saturad|no puedo|demasiad|sobrecarg)/.test(m);
+  const pos=/(bien|content|motivad|tranquil|gust|feliz|agradec|orgullos|disfrut)/.test(m);
+  if(/(estr|agot|cansad|quemad|saturad|abrumad)/.test(m)){stress=8;topic="burnout";}
+  if(/(carga|tarea|reuni|deadline|plazo|sobrecarg|demasiad)/.test(m)){stress=Math.max(stress,7);topic="workload";}
+  if(/(jefe|lider|manager|supervisor|reconoc)/.test(m)){topic="leadership";}
+  if(/(motiv|sentido|prop[oó]sito|aburri|ilusi)/.test(m)){topic="motivation";motivation=neg?3:6;}
+  if(/(familia|casa|horario|desconect|equilibr|vida)/.test(m)){topic="balance";}
+  if(/(crecer|aprend|carrera|ascens|desarroll)/.test(m)){topic="growth";}
+  if(neg){sentiment="negative";motivation=Math.min(motivation,4);satisfaction=4;}
+  if(pos){sentiment="positive";motivation=Math.max(motivation,7);satisfaction=8;stress=Math.min(stress,4);}
+  const burnout_risk=Math.min(100,Math.round(stress*7 + (10-motivation)*3));
+  return {stress,motivation,satisfaction,burnout_risk,topic,sentiment,confidence:0.6};
+}
+function demoReply(msg){
+  const m=msg.toLowerCase();
+  if(/(estr|agot|cansad|quemad|saturad)/.test(m))return "Lamento que te sientas así, gracias por la confianza. 🌿 ¿Qué es lo que más te está drenando energía esta semana? A veces nombrar lo concreto ya ayuda a recuperar control.";
+  if(/(jefe|lider|manager|reconoc)/.test(m))return "Entiendo, la relación con el liderazgo pesa mucho. ¿Qué te gustaría recibir que hoy no estás recibiendo: claridad, reconocimiento o más autonomía?";
+  if(/(carga|tarea|reuni|deadline)/.test(m))return "Suena a mucha carga sobre tus hombros. 💪 Si pudieras quitar UNA cosa de tu semana sin culpa, ¿cuál sería? Empecemos por ahí.";
+  if(/(motiv|aburri|sentido)/.test(m))return "Es válido sentir que la motivación baja. 🎯 ¿Recuerdas un momento reciente donde tu trabajo se sintió valioso? Reconstruyamos ese 'por qué'.";
+  if(/(bien|content|motivad|feliz|gust)/.test(m))return "¡Me alegra escuchar eso! 🙌 ¿Qué crees que está funcionando bien para que lo mantengas (y lo repitas) la próxima semana?";
+  return "Gracias por compartirlo conmigo. 🙏 Cuéntame un poco más: ¿cómo te has sentido en general con tu trabajo estos últimos días?";
+}
+
+/* ============================================================
+   ANALYTICS — agregados anonimizados (k≥4)
+============================================================ */
+function aggregate(){
+  const recs=db().records;
+  const byTeam={};
+  recs.forEach(r=>{ (byTeam[r.team]=byTeam[r.team]||[]).push(r); });
+  const teams=[];
+  for(const [name,arr] of Object.entries(byTeam)){
+    const n=arr.length;
+    const avg=k=>Math.round(arr.reduce((a,x)=>a+x[k],0)/n);
+    teams.push({name,size:new Set(arr.map(r=>r.user)).size, samples:n,
+      workpulse:Math.round((avg('motivation')*0.4+avg('satisfaction')*0.4+(10-avg('stress'))*0.2)*10),
+      burnout:avg('burnout_risk'),
+      retention:Math.min(100,Math.round(avg('burnout_risk')*0.7+(10-avg('motivation'))*4)),
+      anon:n<4 });
+  }
+  const topicCount={};
+  recs.forEach(r=>{topicCount[r.topic]=(topicCount[r.topic]||0)+1;});
+  return {teams,topicCount,total:recs.length,users:new Set(recs.map(r=>r.user)).size};
+}
+function genInsights(){
+  const a=aggregate();const out=[];
+  a.teams.filter(t=>!t.anon).sort((x,y)=>y.burnout-x.burnout).slice(0,3).forEach(t=>{
+    if(t.burnout>65)out.push({sev:"critical",title:`Burnout alto en ${t.name}`,body:`Burnout ${t.burnout}/100 detectado en ${t.samples} interacciones. Riesgo de rotación ${t.retention}%. Requiere atención prioritaria.`});
+    else if(t.burnout>45)out.push({sev:"warning",title:`Señales de alerta en ${t.name}`,body:`Burnout moderado (${t.burnout}/100). Monitorear carga y motivación.`});
+    else out.push({sev:"info",title:`${t.name} en zona saludable`,body:`Bienestar estable (burnout ${t.burnout}/100). Replicar buenas prácticas.`});
+  });
+  const top=Object.entries(a.topicCount).sort((x,y)=>y[1]-x[1])[0];
+  if(top)out.push({sev:"info",title:`Tema más frecuente: ${TOPICS[top[0]]||top[0]}`,body:`Mencionado en ${top[1]} conversaciones. Foco recomendado para iniciativas de RRHH.`});
+  return out;
+}
 function computeROI(){
-  const teams=DATA.teams,avgSalary=DATA.company.avgSalary,tr=DATA.company.turnover/100;
-  const totalEmp=teams.reduce((a,t)=>a+t.size,0)||1;
+  const a=aggregate();const avgSalary=db().avgSalary||55000;const turnover=(db().turnover||18)/100;
+  const totalEmp=Math.max(a.users, a.teams.reduce((s,t)=>s+t.size,0))||1;
   const totalSalary=totalEmp*avgSalary;
-  const turnoverCost=totalSalary*tr*0.75;
-  const improvedCost=totalSalary*Math.max(tr-0.06,0.05)*0.75;
+  const turnoverCost=totalSalary*turnover*0.75;
+  const improvedCost=totalSalary*Math.max(turnover-0.05,0.04)*0.75;
   const savings=turnoverCost-improvedCost;
-  const highRisk=teams.filter(t=>t.burnout>65);
-  const prodLoss=highRisk.reduce((a,t)=>a+t.size*avgSalary*0.15,0);
-  const platformCost=totalEmp*96;
-  const estimatedSavings=savings+prodLoss*0.5;
-  const roi=platformCost?Math.round((estimatedSavings-platformCost)/platformCost*100):0;
-  return{turnoverCost:Math.round(turnoverCost),prodLoss:Math.round(prodLoss),savings:Math.round(estimatedSavings),roi,totalEmp};
+  const highRisk=a.teams.filter(t=>!t.anon&&t.burnout>65);
+  const prodLoss=highRisk.reduce((s,t)=>s+t.size*avgSalary*0.12,0);
+  const platformCost=totalEmp*1200; // costo realista SaaS → ROI creíble
+  const estSavings=savings+prodLoss*0.5;
+  const roi=platformCost?Math.round((estSavings-platformCost)/platformCost*100):0;
+  return {turnoverCost:Math.round(turnoverCost),prodLoss:Math.round(prodLoss),savings:Math.round(estSavings),roi,totalEmp};
 }
 const fmt=n=>"$"+Math.round(n).toLocaleString('en-US');
 
-/* ---------- IA ---------- */
-async function aiReply(message,history){
-  if(OPENAI_API_KEY){
-    try{const res=await fetch("https://api.openai.com/v1/chat/completions",{method:"POST",
-      headers:{"Content-Type":"application/json","Authorization":"Bearer "+OPENAI_API_KEY},
-      body:JSON.stringify({model:"gpt-4o-mini",temperature:.6,messages:[
-        {role:"system",content:"Eres TUPARCH3 Coach de bienestar laboral. NO terapeuta. Coaching: estrés, carga, motivación, liderazgo. Cálido, breve, en español."},
-        ...history,{role:"user",content:message}]})});
-      const d=await res.json();return d.choices[0].message.content;}
-    catch(e){return "⚠️ Error de conexión IA.";}}
-  const m=message.toLowerCase();
-  if(m.includes("estr")||m.includes("cansad")||m.includes("agot"))return "Entiendo la presión. 🌿 Identifica las 3 tareas que más te drenan esta semana. ¿Cuál podrías delegar o aplazar 48h?";
-  if(m.includes("jefe")||m.includes("lider"))return "El liderazgo impacta el bienestar. ¿Qué necesitas: claridad, reconocimiento o autonomía? Preparemos una conversación breve.";
-  if(m.includes("motiv"))return "La motivación cae al perder el propósito. 🎯 ¿Recuerdas un momento donde tu trabajo se sintió valioso?";
-  return "Gracias por compartirlo. 🙏 ¿Es puntual de esta semana o llevas tiempo así?";
-}
-function classify(m){m=m.toLowerCase();if(m.includes("estr")||m.includes("cansad"))return"burnout";if(m.includes("jefe")||m.includes("lider"))return"leadership";if(m.includes("motiv"))return"motivation";if(m.includes("carga"))return"workload";return"communication";}
-
-/* ---------- ROUTER ---------- */
+/* ============================================================
+   ROUTER
+============================================================ */
 function go(v){window.scrollTo(0,0);render(v);}
-function render(v="home"){CURRENT=v;const a=document.getElementById("app");let h="";
-  if(v==="home")h=Home();else if(v==="config")h=Config();else if(v==="app"){if(!SESSION){go("login");return;}h=Shell();}else if(v==="login")h=Login();
+function render(v="home"){CURRENT=v;chartRefs.forEach(c=>c.destroy());chartRefs=[];
+  const a=document.getElementById("app");let h="";
+  if(v==="home")h=Home();else if(v==="login")h=Login();else if(v==="config")h=Config();
+  else if(v==="app"){if(!SESSION){go("login");return;}h=Shell();}
   a.innerHTML=`<div class="fade-in">${h}</div>`;if(v==="app")mountApp();}
 
 /* ---------- HOME ---------- */
-function Home(){return `
+function Home(){const d=db();return `
 <nav class="flex justify-between items-center px-6 md:px-12 py-5 max-w-7xl mx-auto">
   <span class="font-bold text-xl">TUPARCH3™</span>
-  <button onclick="go('config')" class="rounded-full bg-zinc-800 px-4 py-2 text-sm">⚙️ Configurar datos</button>
-</nav>
-<section class="max-w-3xl mx-auto text-center px-6 pt-24 pb-16">
-  <span class="inline-block rounded-full border border-indigo-700 px-4 py-1 text-xs text-indigo-400 mb-6">Workforce Intelligence · IA</span>
-  <h1 class="text-4xl md:text-5xl font-bold leading-tight">Demo personalizada para<br><span class="text-indigo-500">${DATA.company.name}</span></h1>
-  <p class="mt-6 text-zinc-400">Convierte el bienestar laboral en ROI medible. Coaching con IA, detección de burnout y analítica de rotación.</p>
-  <div class="mt-10 flex gap-4 justify-center flex-wrap">
-    <button onclick="go('login')" class="rounded-xl bg-indigo-600 hover:bg-indigo-700 px-8 py-4 font-medium glow">▶ Iniciar Demo</button>
-    <button onclick="go('config')" class="rounded-xl border border-zinc-700 px-8 py-4 font-medium">⚙️ Editar mis datos</button>
+  <div class="flex gap-2">
+    <button onclick="go('config')" class="rounded-full bg-zinc-800 px-4 py-2 text-sm">⚙️ Configurar</button>
+    <button onclick="go('login')" class="rounded-full bg-indigo-600 px-5 py-2 text-sm font-medium">Entrar</button>
   </div>
+</nav>
+<section class="max-w-3xl mx-auto text-center px-6 pt-20 pb-12">
+  <span class="inline-block rounded-full border border-indigo-700 px-4 py-1 text-xs text-indigo-400 mb-6">Workforce Intelligence · IA Conversacional</span>
+  <h1 class="text-4xl md:text-5xl font-bold leading-tight">El bienestar laboral<br>medido <span class="text-indigo-500">conversando</span>, no con formularios</h1>
+  <p class="mt-6 text-zinc-400">Tus empleados charlan con una IA empática. De cada conversación extraemos señales reales de estrés, motivación y burnout — anonimizadas — que alimentan tu dashboard ejecutivo.</p>
+  <div class="mt-10 flex gap-4 justify-center flex-wrap">
+    <button onclick="go('login')" class="rounded-xl bg-indigo-600 hover:bg-indigo-700 px-8 py-4 font-medium glow">▶ Iniciar</button>
+    <button onclick="go('config')" class="rounded-xl border border-zinc-700 px-8 py-4 font-medium">⚙️ Configurar empresa</button>
+  </div>
+  <p class="mt-6 text-xs text-zinc-600">${d.records.length} interacciones registradas · ${new Set(db().records.map(r=>r.user)).size} empleados activos</p>
 </section>
 <section class="max-w-5xl mx-auto px-6 pb-20 grid md:grid-cols-3 gap-4">
-  ${[["🤖","Chat IA","Coaching de bienestar 24/7"],["📊","Analytics","Patrones anonimizados"],["💰","ROI","Bienestar en dinero"]].map(([i,t,d])=>`<div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6"><div class="text-3xl">${i}</div><h3 class="font-semibold mt-2">${t}</h3><p class="text-sm text-zinc-400 mt-1">${d}</p></div>`).join("")}
+  ${[["💬","Chat empático","La IA conversa natural y extrae datos sin que el empleado llene nada"],["📊","Dashboard real","Métricas agregadas de conversaciones reales, no inventadas"],["💰","ROI financiero","Traduce el bienestar en ahorro de rotación medible"]].map(([i,t,d])=>`<div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6"><div class="text-3xl">${i}</div><h3 class="font-semibold mt-2">${t}</h3><p class="text-sm text-zinc-400 mt-1">${d}</p></div>`).join("")}
 </section>`;}
 
-/* ---------- CONFIG (EDITOR) ---------- */
-function Config(){return `
-<div class="max-w-3xl mx-auto px-6 py-10">
+/* ---------- CONFIG ---------- */
+function Config(){const d=db();return `
+<div class="max-w-2xl mx-auto px-6 py-10">
   <button onclick="go('home')" class="text-xs text-zinc-500 mb-4">← Volver</button>
-  <h1 class="text-2xl font-bold mb-6">⚙️ Configura tu demo</h1>
-
-  <div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 mb-6">
-    <h2 class="font-semibold mb-4">🏢 Datos de la empresa</h2>
-    <div class="grid md:grid-cols-2 gap-3">
-      <div><label class="text-xs text-zinc-400">Nombre empresa</label><input id="cName" value="${DATA.company.name}" class="w-full mt-1 rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm"></div>
-      <div><label class="text-xs text-zinc-400">Industria</label><input id="cInd" value="${DATA.company.industry}" class="w-full mt-1 rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm"></div>
-      <div><label class="text-xs text-zinc-400">Salario promedio anual</label><input id="cSal" type="number" value="${DATA.company.avgSalary}" class="w-full mt-1 rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm"></div>
-      <div><label class="text-xs text-zinc-400">Rotación actual (%)</label><input id="cTur" type="number" value="${DATA.company.turnover}" class="w-full mt-1 rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm"></div>
-      <div><label class="text-xs text-zinc-400">Persona contacto (saludo IA)</label><input id="cCon" value="${DATA.company.contact}" class="w-full mt-1 rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm"></div>
+  <h1 class="text-2xl font-bold mb-6">⚙️ Configuración</h1>
+  <div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 mb-4 space-y-3">
+    <h2 class="font-semibold">🏢 Empresa</h2>
+    <div><label class="text-xs text-zinc-400">Nombre</label><input id="cName" value="${d.company||''}" class="w-full mt-1 rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm"></div>
+    <div class="grid grid-cols-2 gap-3">
+      <div><label class="text-xs text-zinc-400">Salario promedio anual</label><input id="cSal" type="number" value="${d.avgSalary||55000}" class="w-full mt-1 rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm"></div>
+      <div><label class="text-xs text-zinc-400">Rotación actual (%)</label><input id="cTur" type="number" value="${d.turnover||18}" class="w-full mt-1 rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm"></div>
     </div>
   </div>
-
-  <div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 mb-6">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="font-semibold">👥 Equipos / Áreas</h2>
-      <button onclick="addTeam()" class="text-xs bg-indigo-600 px-3 py-1.5 rounded-lg">+ Agregar equipo</button>
-    </div>
-    <p class="text-xs text-zinc-500 mb-3">WorkPulse y Burnout/Rotación van de 0 a 100. Más burnout/rotación = más rojo (más urgencia en demo).</p>
-    <div id="teamList">${teamRows()}</div>
+  <div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 mb-4">
+    <h2 class="font-semibold mb-2">🔑 OpenAI API Key</h2>
+    <p class="text-xs text-zinc-500 mb-2">Con clave: IA real conversa y extrae datos. Sin clave: modo demo inteligente.</p>
+    <input id="cKey" type="password" placeholder="sk-..." value="${KEY}" class="w-full rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm">
+    <p class="text-[10px] text-zinc-600 mt-1">Se guarda solo en tu navegador. Para producción real, usa un backend.</p>
   </div>
-
-  <div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 mb-6">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="font-semibold">💡 Insights / Alertas</h2>
-      <button onclick="addInsight()" class="text-xs bg-indigo-600 px-3 py-1.5 rounded-lg">+ Agregar insight</button>
-    </div>
-    <div id="insightList">${insightRows()}</div>
+  <div class="rounded-2xl border border-rose-900 bg-rose-950/20 p-6 mb-4">
+    <h2 class="font-semibold mb-2">🗑️ Datos</h2>
+    <p class="text-xs text-zinc-400 mb-3">Interacciones guardadas: <b>${d.records.length}</b></p>
+    <button onclick="if(confirm('¿Borrar TODAS las conversaciones registradas?')){const x=db();x.records=[];saveDB(x);go('config');}" class="text-xs bg-rose-700 px-3 py-2 rounded-lg">Borrar todas las interacciones</button>
   </div>
-
-  <div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 mb-6">
-    <h2 class="font-semibold mb-3">🔑 OpenAI (opcional, para IA real)</h2>
-    <input id="cKey" type="password" placeholder="sk-... (déjalo vacío para modo demo)" value="${OPENAI_API_KEY}" class="w-full rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm">
-  </div>
-
-  <div class="flex gap-3">
-    <button onclick="saveConfig()" class="flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 py-3 font-medium">💾 Guardar y ver demo</button>
-    <button onclick="resetConfig()" class="rounded-xl bg-zinc-800 px-5 py-3">🔄 Resetear</button>
-  </div>
+  <button onclick="saveConfig()" class="w-full rounded-xl bg-emerald-600 hover:bg-emerald-700 py-3 font-medium">💾 Guardar</button>
 </div>`;}
-
-function teamRows(){return DATA.teams.map((t,i)=>`
-<div class="grid grid-cols-12 gap-2 mb-2 items-center">
-  <input data-tn="${i}" value="${t.name}" placeholder="Nombre" class="col-span-4 rounded-lg bg-zinc-800 border border-zinc-700 px-2 py-1.5 text-xs">
-  <input data-tw="${i}" type="number" value="${t.workpulse}" title="WorkPulse" class="col-span-2 rounded-lg bg-zinc-800 border border-zinc-700 px-2 py-1.5 text-xs">
-  <input data-tb="${i}" type="number" value="${t.burnout}" title="Burnout" class="col-span-2 rounded-lg bg-zinc-800 border border-zinc-700 px-2 py-1.5 text-xs">
-  <input data-tr="${i}" type="number" value="${t.retention}" title="Rotación" class="col-span-2 rounded-lg bg-zinc-800 border border-zinc-700 px-2 py-1.5 text-xs">
-  <input data-ts="${i}" type="number" value="${t.size}" title="Personas" class="col-span-1 rounded-lg bg-zinc-800 border border-zinc-700 px-2 py-1.5 text-xs">
-  <button onclick="delTeam(${i})" class="col-span-1 text-rose-400 text-xs">✕</button>
-</div>`).join("")+`<div class="grid grid-cols-12 gap-2 text-[10px] text-zinc-500 mt-1"><span class="col-span-4">Nombre</span><span class="col-span-2">Pulse</span><span class="col-span-2">Burnout</span><span class="col-span-2">Rotación</span><span class="col-span-1">#</span></div>`;}
-
-function insightRows(){return DATA.insights.map((it,i)=>`
-<div class="mb-2 flex gap-2 items-start">
-  <select data-is="${i}" class="rounded-lg bg-zinc-800 border border-zinc-700 px-2 py-1.5 text-xs">
-    <option value="critical" ${it.sev==='critical'?'selected':''}>🔴 Crítico</option>
-    <option value="warning" ${it.sev==='warning'?'selected':''}>🟡 Alerta</option>
-    <option value="info" ${it.sev==='info'?'selected':''}>🔵 Info</option>
-  </select>
-  <div class="flex-1 space-y-1">
-    <input data-it="${i}" value="${it.title}" placeholder="Título" class="w-full rounded-lg bg-zinc-800 border border-zinc-700 px-2 py-1.5 text-xs">
-    <textarea data-ib="${i}" placeholder="Descripción" class="w-full rounded-lg bg-zinc-800 border border-zinc-700 px-2 py-1.5 text-xs">${it.body}</textarea>
-  </div>
-  <button onclick="delInsight(${i})" class="text-rose-400 text-xs">✕</button>
-</div>`).join("");}
-
-function readForm(){
-  DATA.company.name=cName.value;DATA.company.industry=cInd.value;
-  DATA.company.avgSalary=+cSal.value;DATA.company.turnover=+cTur.value;DATA.company.contact=cCon.value;
-  DATA.company.slug=cName.value.toLowerCase().replace(/\s+/g,'');
-  DATA.teams.forEach((t,i)=>{
-    t.name=document.querySelector(`[data-tn="${i}"]`).value;
-    t.workpulse=+document.querySelector(`[data-tw="${i}"]`).value;
-    t.burnout=+document.querySelector(`[data-tb="${i}"]`).value;
-    t.retention=+document.querySelector(`[data-tr="${i}"]`).value;
-    t.size=+document.querySelector(`[data-ts="${i}"]`).value;});
-  DATA.insights.forEach((it,i)=>{
-    it.sev=document.querySelector(`[data-is="${i}"]`).value;
-    it.title=document.querySelector(`[data-it="${i}"]`).value;
-    it.body=document.querySelector(`[data-ib="${i}"]`).value;});
-}
-function addTeam(){readForm();DATA.teams.push({name:"Nuevo equipo",workpulse:60,burnout:40,retention:30,size:10});document.getElementById("teamList").innerHTML=teamRows();}
-function delTeam(i){readForm();DATA.teams.splice(i,1);document.getElementById("teamList").innerHTML=teamRows();}
-function addInsight(){readForm();DATA.insights.push({sev:"warning",title:"Nuevo insight",body:""});document.getElementById("insightList").innerHTML=insightRows();}
-function delInsight(i){readForm();DATA.insights.splice(i,1);document.getElementById("insightList").innerHTML=insightRows();}
-function saveConfig(){readForm();OPENAI_API_KEY=cKey.value.trim();localStorage.setItem('t3_key',OPENAI_API_KEY);saveData(DATA);go("home");}
-function resetConfig(){if(confirm("¿Borrar todo y volver a valores por defecto?")){DATA=JSON.parse(JSON.stringify(DEFAULT));saveData(DATA);go("config");}}
+function saveConfig(){const d=db();d.company=cName.value||"Mi Empresa";d.avgSalary=+cSal.value||55000;d.turnover=+cTur.value||18;saveDB(d);KEY=cKey.value.trim();localStorage.setItem('t3_key',KEY);go("home");}
 
 /* ---------- LOGIN ---------- */
 function Login(){return `
 <div class="min-h-screen flex items-center justify-center px-6">
   <div class="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900/60 p-8 glow">
     <button onclick="go('home')" class="text-xs text-zinc-500 mb-4">← Volver</button>
-    <h2 class="text-2xl font-bold">${DATA.company.name}</h2>
-    <p class="text-sm text-zinc-400 mb-6">Elige un rol para la demo</p>
+    <h2 class="text-2xl font-bold">${db().company||'Mi Empresa'}</h2>
+    <p class="text-sm text-zinc-400 mb-6">Accede según tu rol</p>
     <div class="space-y-3">
-      <button onclick="enter('employee')" class="w-full rounded-xl bg-indigo-600 hover:bg-indigo-700 py-3 font-medium">👤 Entrar como Empleado</button>
-      <button onclick="enter('leader')" class="w-full rounded-xl bg-zinc-800 hover:bg-zinc-700 py-3 font-medium">👔 Entrar como Líder</button>
-      <button onclick="enter('admin')" class="w-full rounded-xl bg-zinc-800 hover:bg-zinc-700 py-3 font-medium">🏢 Entrar como RRHH / Dirección</button>
+      <div>
+        <label class="text-xs text-zinc-400">Tu nombre (empleado)</label>
+        <input id="uName" placeholder="Ej: Ana" class="w-full mt-1 rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm">
+      </div>
+      <div>
+        <label class="text-xs text-zinc-400">Tu equipo</label>
+        <input id="uTeam" placeholder="Ej: Ventas" list="teams" class="w-full mt-1 rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm">
+        <datalist id="teams">${[...new Set(db().records.map(r=>r.team))].map(t=>`<option value="${t}">`).join("")}</datalist>
+      </div>
+      <button onclick="enterEmployee()" class="w-full rounded-xl bg-indigo-600 hover:bg-indigo-700 py-3 font-medium">👤 Entrar a conversar</button>
+      <div class="border-t border-zinc-800 pt-3 grid grid-cols-2 gap-2">
+        <button onclick="enter('leader')" class="rounded-xl bg-zinc-800 hover:bg-zinc-700 py-2.5 text-sm">👔 Líder</button>
+        <button onclick="enter('admin')" class="rounded-xl bg-zinc-800 hover:bg-zinc-700 py-2.5 text-sm">🏢 RRHH</button>
+      </div>
     </div>
   </div>
 </div>`;}
-function enter(role){const names={employee:"Empleado",leader:"Líder de equipo",admin:DATA.company.contact};SESSION={role,name:names[role]};go("app");}
+function enterEmployee(){const n=uName.value.trim(),t=uTeam.value.trim();if(!n||!t){alert("Pon tu nombre y equipo");return;}SESSION={role:"employee",name:n,team:t};go("app");}
+function enter(role){SESSION={role,name:role==="leader"?"Líder":"RRHH / Dirección"};go("app");}
 
 /* ---------- SHELL ---------- */
 function Shell(){
-  const nav={employee:[["chat","💬 Chat IA"],["scores","📈 Mis Scores"]],
-    leader:[["heatmap","🔥 Heatmap"],["trends","📉 Tendencias"],["insights","💡 Insights"],["risk","⚠️ Riesgo"]],
-    admin:[["exec","📊 Ejecutivo"],["roi","💰 ROI"],["insights","💡 Insights"]]}[SESSION.role];
+  const nav={employee:[["chat","💬 Conversar"],["me","📈 Mi resumen"]],
+    leader:[["heat","🔥 Heatmap"],["topics","🏷️ Temas"],["insights","💡 Insights"],["risk","⚠️ Riesgo"]],
+    admin:[["exec","📊 Ejecutivo"],["roi","💰 ROI"],["topics","🏷️ Temas"],["insights","💡 Insights"]]}[SESSION.role];
   return `<div class="flex h-screen overflow-hidden">
   <aside class="w-60 border-r border-zinc-800 bg-zinc-900/50 flex flex-col">
-    <div class="p-5 border-b border-zinc-800"><p class="font-bold">TUPARCH3™</p><p class="text-xs text-zinc-500">${DATA.company.name}</p></div>
+    <div class="p-5 border-b border-zinc-800"><p class="font-bold">TUPARCH3™</p><p class="text-xs text-zinc-500">${db().company||'Mi Empresa'}</p></div>
     <nav class="flex-1 p-3 space-y-1">${nav.map(([k,l])=>`<button onclick="setTab('${k}')" id="tab-${k}" class="navbtn w-full text-left px-4 py-2.5 rounded-xl text-sm hover:bg-indigo-600/20">${l}</button>`).join("")}</nav>
-    <div class="p-4 border-t border-zinc-800"><p class="text-sm font-medium">${SESSION.name}</p><p class="text-xs text-zinc-500 capitalize">${SESSION.role}</p><button onclick="go('home')" class="mt-3 text-xs text-rose-400">Salir →</button></div>
+    <div class="p-4 border-t border-zinc-800"><p class="text-sm font-medium">${SESSION.name}</p><p class="text-xs text-zinc-500 capitalize">${SESSION.role==='employee'?SESSION.team:SESSION.role}</p><button onclick="SESSION=null;go('home')" class="mt-3 text-xs text-rose-400">Salir →</button></div>
   </aside>
   <main id="main" class="flex-1 overflow-y-auto"></main></div>`;}
 
-let currentTab,chartRef=null;
-function mountApp(){setTab({employee:"chat",leader:"heatmap",admin:"exec"}[SESSION.role]);}
-function setTab(t){if(chartRef){chartRef.destroy();chartRef=null;}currentTab=t;
+let currentTab;
+function mountApp(){setTab({employee:"chat",leader:"heat",admin:"exec"}[SESSION.role]);}
+function setTab(t){chartRefs.forEach(c=>c.destroy());chartRefs=[];currentTab=t;
   document.querySelectorAll(".navbtn").forEach(b=>b.classList.remove("bg-indigo-600","text-white"));
   const b=document.getElementById("tab-"+t);if(b)b.classList.add("bg-indigo-600","text-white");
-  const v={chat:ChatV,scores:ScoresV,heatmap:HeatV,trends:TrendV,insights:InsV,risk:RiskV,exec:ExecV,roi:RoiV};
-  document.getElementById("main").innerHTML=`<div class="fade-in p-6 md:p-10 max-w-5xl mx-auto">${v[t]()}</div>`;
-  if(t==="chat")initChat();if(t==="trends")drawTrend();if(t==="exec")drawExec();}
+  const V={chat:ChatV,me:MeV,heat:HeatV,topics:TopicsV,insights:InsV,risk:RiskV,exec:ExecV,roi:RoiV};
+  document.getElementById("main").innerHTML=`<div class="fade-in p-6 md:p-10 max-w-5xl mx-auto">${V[t]()}</div>`;
+  if(t==="chat")initChat();if(t==="topics")drawTopics();if(t==="exec")drawExec();
+}
 
-/* ---------- VIEWS ---------- */
-function ChatV(){return `<h2 class="text-2xl font-bold mb-1">TUPARCH3 Coach</h2><p class="text-sm text-zinc-400 mb-4">Conversación privada 🔒</p>
+/* ============================================================
+   VISTA CHAT (empleado) — el corazón del sistema
+============================================================ */
+function ChatV(){return `
+<div class="flex items-center justify-between mb-1">
+  <h2 class="text-2xl font-bold">Tu espacio de bienestar</h2>
+  <span class="text-xs ${KEY?'text-emerald-400':'text-amber-400'}">${KEY?'● IA real activa':'● Modo demo'}</span>
+</div>
+<p class="text-sm text-zinc-400 mb-4">Conversación privada · tu líder nunca ve lo que escribes, solo datos agregados 🔒</p>
 <div id="chatbox" class="rounded-2xl border border-zinc-800 bg-zinc-900/40 h-[55vh] overflow-y-auto p-4 space-y-3"></div>
-<div class="mt-3 flex gap-2"><input id="msg" onkeydown="if(event.key==='Enter')sendMsg()" placeholder="¿Cómo te sientes hoy?" class="flex-1 rounded-xl bg-zinc-800 border border-zinc-700 px-4 py-3 text-sm"><button onclick="sendMsg()" class="rounded-xl bg-indigo-600 px-5">Enviar</button></div>`;}
+<div class="mt-3 flex gap-2">
+  <input id="msg" onkeydown="if(event.key==='Enter')sendMsg()" placeholder="Cuéntame cómo te sientes en el trabajo..." class="flex-1 rounded-xl bg-zinc-800 border border-zinc-700 px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+  <button id="sendBtn" onclick="sendMsg()" class="rounded-xl bg-indigo-600 hover:bg-indigo-700 px-5 font-medium">Enviar</button>
+</div>
+<p id="captured" class="text-[11px] text-zinc-600 mt-2"></p>`;}
+
 let chatHistory=[];
-function initChat(){chatHistory=[];bub("assistant","¡Hola! 👋 Soy tu coach de bienestar de "+DATA.company.name+". ¿Qué tal tu semana?");}
-function bub(r,t,tp){const b=document.getElementById("chatbox");const me=r==="user";b.innerHTML+=`<div class="flex ${me?'justify-end':'justify-start'}"><div class="rounded-2xl px-4 py-3 max-w-[80%] text-sm ${me?'bg-indigo-600':'bg-zinc-800'}">${t}${tp?`<span class="block mt-1 text-[10px] uppercase opacity-50">${tp}</span>`:''}</div></div>`;b.scrollTop=b.scrollHeight;}
-async function sendMsg(){const i=document.getElementById("msg");const t=i.value.trim();if(!t)return;i.value="";bub("user",t,classify(t));chatHistory.push({role:"user",content:t});const b=document.getElementById("chatbox");b.innerHTML+=`<div id="typ" class="text-zinc-500 text-sm animate-pulse pl-2">escribiendo…</div>`;b.scrollTop=b.scrollHeight;const r=await aiReply(t,chatHistory);document.getElementById("typ")?.remove();bub("assistant",r);chatHistory.push({role:"assistant",content:r});}
+function initChat(){chatHistory=[];bub("assistant",`¡Hola ${SESSION.name}! 👋 Soy tu coach de bienestar. Este es tu espacio seguro y privado. ¿Cómo ha sido tu semana en el trabajo?`);}
+function bub(role,text,topic){const box=document.getElementById("chatbox");const me=role==="user";
+  box.innerHTML+=`<div class="flex ${me?'justify-end':'justify-start'}"><div class="rounded-2xl px-4 py-3 max-w-[80%] text-sm leading-relaxed ${me?'bg-indigo-600':'bg-zinc-800'}">${text}${topic?`<span class="block mt-1.5 text-[10px] uppercase tracking-wide opacity-50">🏷️ ${TOPICS[topic]||topic}</span>`:''}</div></div>`;
+  box.scrollTop=box.scrollHeight;}
+function typing(on){const box=document.getElementById("chatbox");if(on){box.innerHTML+=`<div id="typ" class="flex justify-start"><div class="bg-zinc-800 rounded-2xl px-4 py-3 typing text-lg"><span>●</span><span>●</span><span>●</span></div></div>`;box.scrollTop=box.scrollHeight;}else document.getElementById("typ")?.remove();}
 
-function gauge(l,v,inv){const g=inv?v<40:v>60,m=v>=40&&v<=60;const c=g?"emerald":m?"amber":"rose";return `<div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5"><p class="text-sm text-zinc-400">${l}</p><p class="text-4xl font-bold text-${c}-500 mt-1">${v}<span class="text-zinc-600 text-lg">/100</span></p><div class="mt-3 h-2 rounded-full bg-zinc-800"><div class="h-2 rounded-full bg-${c}-500" style="width:${v}%"></div></div></div>`;}
-function ScoresV(){const avg=Math.round(DATA.teams.reduce((a,t)=>a+t.workpulse,0)/DATA.teams.length);const bn=Math.round(DATA.teams.reduce((a,t)=>a+t.burnout,0)/DATA.teams.length);return `<h2 class="text-2xl font-bold mb-6">Mis Scores</h2><div class="grid md:grid-cols-2 gap-4 mb-6">${gauge("WorkPulse Index",avg)}${gauge("Riesgo Burnout",bn,true)}${gauge("Motivación",65)}${gauge("Satisfacción",70)}</div><div class="rounded-2xl border border-indigo-700 bg-indigo-950/30 p-6"><h3 class="font-semibold mb-2">💡 Recomendación</h3><p class="text-sm text-zinc-300">Bloquea 2 horas sin reuniones esta semana y haz un check-in con tu líder sobre prioridades.</p></div>`;}
-function HeatV(){return `<h2 class="text-2xl font-bold mb-1">Heatmap de Equipos</h2><p class="text-sm text-zinc-400 mb-6">Datos agregados y anonimizados 🔒</p><div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">${DATA.teams.map(t=>{const c=t.burnout>65?"rose":t.burnout>45?"amber":"emerald";return `<div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5"><div class="flex justify-between"><h3 class="font-semibold">${t.name}</h3><span class="text-xs text-zinc-500">${t.size}p</span></div><div class="mt-3 space-y-2 text-sm"><div><div class="flex justify-between"><span class="text-zinc-400">Pulse</span><span>${t.workpulse}</span></div><div class="h-1.5 bg-zinc-800 rounded-full mt-1"><div class="h-1.5 bg-indigo-500 rounded-full" style="width:${t.workpulse}%"></div></div></div><div><div class="flex justify-between"><span class="text-zinc-400">Burnout</span><span class="text-${c}-400">${t.burnout}</span></div><div class="h-1.5 bg-zinc-800 rounded-full mt-1"><div class="h-1.5 bg-${c}-500 rounded-full" style="width:${t.burnout}%"></div></div></div></div></div>`;}).join("")}</div>`;}
-function RiskV(){return `<h2 class="text-2xl font-bold mb-6">Riesgo de Rotación</h2><div class="space-y-3">${[...DATA.teams].sort((a,b)=>b.retention-a.retention).map(t=>{const c=t.retention>50?"rose":t.retention>30?"amber":"emerald";return `<div class="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 flex items-center gap-4"><span class="w-32 font-medium">${t.name}</span><div class="flex-1 h-2 bg-zinc-800 rounded-full"><div class="h-2 bg-${c}-500 rounded-full" style="width:${t.retention}%"></div></div><span class="text-${c}-400 font-semibold w-12 text-right">${t.retention}%</span></div>`;}).join("")}</div>`;}
-function InsV(){return `<h2 class="text-2xl font-bold mb-6">Insights de IA</h2><div class="space-y-3">${DATA.insights.map(i=>{const c={critical:"rose",warning:"amber",info:"indigo"}[i.sev];return `<div class="rounded-2xl border border-${c}-700 bg-${c}-950/20 p-5"><span class="text-xs uppercase text-${c}-400 font-semibold">${i.sev}</span><h3 class="font-semibold mt-1">${i.title}</h3><p class="text-sm text-zinc-300 mt-1">${i.body}</p></div>`;}).join("")}</div>`;}
-function TrendV(){return `<h2 class="text-2xl font-bold mb-6">Tendencias</h2><div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6"><canvas id="tc" height="110"></canvas></div>`;}
-function drawTrend(){const ctx=document.getElementById("tc");if(!ctx)return;const base=Math.round(DATA.teams.reduce((a,t)=>a+t.workpulse,0)/DATA.teams.length);chartRef=new Chart(ctx,{type:"line",data:{labels:["S6","S7","S8","S9","S10","S11","S12"],datasets:[{label:"WorkPulse",data:[base+7,base+4,base-6,base,base-2,base+2,base],borderColor:"#6366f1",backgroundColor:"rgba(99,102,241,.15)",fill:true,tension:.4,pointRadius:4}]},options:{plugins:{legend:{labels:{color:"#a1a1aa"}}},scales:{y:{min:0,max:100,grid:{color:"#27272a"},ticks:{color:"#a1a1aa"}},x:{grid:{display:false},ticks:{color:"#a1a1aa"}}}});}
-function ExecV(){const r=computeROI();const avg=Math.round(DATA.teams.reduce((a,t)=>a+t.workpulse,0)/DATA.teams.length);const crit=DATA.teams.filter(t=>t.burnout>60);return `<h2 class="text-2xl font-bold mb-6">Dashboard Ejecutivo · ${DATA.company.name}</h2><div class="grid md:grid-cols-4 gap-4 mb-8">${[["WorkPulse",avg,"indigo"],["Empleados",r.totalEmp,"zinc"],["Ahorro/año",fmt(r.savings),"emerald"],["ROI",r.roi+"%","emerald"]].map(([l,v,c])=>`<div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5"><p class="text-xs text-zinc-400">${l}</p><p class="text-3xl font-bold text-${c}-400 mt-1">${v}</p></div>`).join("")}</div><div class="grid md:grid-cols-2 gap-4"><div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6"><h3 class="font-semibold mb-3">Burnout por equipo</h3><canvas id="ec" height="160"></canvas></div><div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6"><h3 class="font-semibold mb-2">📈 Predicción</h3><p class="text-sm text-zinc-400">Sin intervención: pérdidas estimadas <b class="text-rose-400">${fmt(r.turnoverCost*0.3)}</b> en 90 días.</p><h3 class="font-semibold mt-4 mb-2">🔥 Crítico</h3>${crit.length?crit.map(t=>`<p class="text-sm text-rose-400">${t.name} — ${t.burnout}/100</p>`).join(""):'<p class="text-sm text-emerald-400">Sin equipos críticos ✅</p>'}</div></div>`;}
-function drawExec(){const ctx=document.getElementById("ec");if(!ctx)return;chartRef=new Chart(ctx,{type:"bar",data:{labels:DATA.teams.map(t=>t.name),datasets:[{data:DATA.teams.map(t=>t.burnout),backgroundColor:DATA.teams.map(t=>t.burnout>65?"#f43f5e":t.burnout>45?"#f59e0b":"#10b981")}]},options:{plugins:{legend:{display:false}},scales:{y:{min:0,max:100,grid:{color:"#27272a"},ticks:{color:"#a1a1aa"}},x:{grid:{display:false},ticks:{color:"#a1a1aa"}}}});}
-function RoiV(){const r=computeROI();return `<h2 class="text-2xl font-bold mb-1">ROI Financiero · ${DATA.company.name}</h2><p class="text-sm text-zinc-400 mb-6">Industria: ${DATA.company.industry} · ${r.totalEmp} empleados · rotación ${DATA.company.turnover}%</p><div class="grid md:grid-cols-3 gap-4 mb-6">${[["Costo Rotación",fmt(r.turnoverCost),"rose"],["Productividad Perdida",fmt(r.prodLoss),"amber"],["Ahorro Estimado/año",fmt(r.savings),"emerald"]].map(([l,v,c])=>`<div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5"><p class="text-xs text-zinc-400">${l}</p><p class="text-2xl font-bold text-${c}-400 mt-1">${v}</p></div>`).join("")}</div><div class="rounded-2xl border border-emerald-700 bg-emerald-950/20 p-8 text-center"><p class="text-zinc-400">Retorno proyectado</p><p class="text-6xl font-bold text-emerald-400 mt-2">${r.roi}%</p><p class="text-sm text-zinc-400 mt-3">Por cada $1 invertido, ~$${(1+r.roi/100).toFixed(2)} en ahorro de rotación y productividad.</p></div>`;}
+async function sendMsg(){
+  const input=document.getElementById("msg");const text=input.value.trim();if(!text)return;
+  input.value="";document.getElementById("sendBtn").disabled=true;
+  bub("user",text);chatHistory.push({role:"user",content:text});
+  typing(true);
+  const {reply,data}=await aiTurn(text,chatHistory);
+  typing(false);
+  bub("assistant",reply,data.topic);
+  chatHistory.push({role:"assistant",content:reply});
+  // GUARDAR el dato extraído real
+  pushRecord({user:SESSION.name,team:SESSION.team,ts:Date.now(),
+    stress:data.stress,motivation:data.motivation,satisfaction:data.satisfaction,
+    burnout_risk:data.burnout_risk,topic:data.topic,sentiment:data.sentiment});
+  document.getElementById("captured").textContent=`✓ Señal registrada (anónima): ${TOPICS[data.topic]||data.topic} · sentimiento ${data.sentiment}`;
+  document.getElementById("sendBtn").disabled=false;
+}
 
+/* ---------- MI RESUMEN (empleado) ---------- */
+function MeV(){
+  const mine=db().records.filter(r=>r.user===SESSION.name);
+  if(!mine.length)return `<h2 class="text-2xl font-bold mb-4">Mi resumen</h2><p class="text-zinc-400">Aún no has conversado. Ve a 💬 Conversar para empezar.</p>`;
+  const avg=k=>Math.round(mine.reduce((a,x)=>a+x[k],0)/mine.length);
+  const wp=Math.round((avg('motivation')*0.4+avg('satisfaction')*0.4+(10-avg('stress'))*0.2)*10);
+  const bn=avg('burnout_risk');
+  return `<h2 class="text-2xl font-bold mb-6">Mi resumen personal</h2>
+  <div class="grid md:grid-cols-2 gap-4 mb-6">${gauge("WorkPulse",wp)}${gauge("Riesgo Burnout",bn,true)}${gauge("Motivación",avg('motivation')*10)}${gauge("Satisfacción",avg('satisfaction')*10)}</div>
+  <div class="rounded-2xl border border-indigo-700 bg-indigo-950/30 p-6"><h3 class="font-semibold mb-2">💡 Para ti</h3><p class="text-sm text-zinc-300">${bn>60?'Tu nivel de agotamiento es elevado. Esta semana prioriza descanso real: bloquea 2h sin reuniones y habla con tu líder sobre tu carga.':bn>40?'Vas razonablemente bien, pero cuida tu energía. Identifica qué tarea te drena más y busca reducirla.':'¡Buen estado de bienestar! Mantén lo que estás haciendo y cuida tus límites.'}</p></div>
+  <p class="text-xs text-zinc-600 mt-4">Basado en ${mine.length} conversaciones tuyas. Privado y solo visible para ti.</p>`;}
+
+/* ---------- VISTAS LÍDER / ADMIN ---------- */
+function emptyState(){return `<div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-10 text-center"><p class="text-zinc-400">📭 Aún no hay suficientes datos.</p><p class="text-xs text-zinc-600 mt-2">Los empleados deben conversar con el chatbot para generar señales. Entra como empleado y prueba.</p></div>`;}
+function gauge(l,v,inv){const g=inv?v<40:v>60,m=v>=40&&v<=60;const c=g?"emerald":m?"amber":"rose";return `<div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5"><p class="text-sm text-zinc-400">${l}</p><p class="text-4xl font-bold text-${c}-500 mt-1">${v}<span class="text-zinc-600 text-lg">/100</span></p><div class="mt-3 h-2 rounded-full bg-zinc-800"><div class="h-2 rounded-full bg-${c}-500" style="width:${Math.min(v,100)}%"></div></div></div>`;}
+
+function HeatV(){const a=aggregate();if(!a.teams.length)return `<h2 class="text-2xl font-bold mb-6">Heatmap de Equipos</h2>${emptyState()}`;
+  return `<h2 class="text-2xl font-bold mb-1">Heatmap de Equipos</h2><p class="text-sm text-zinc-400 mb-6">Datos extraídos de conversaciones reales · anonimizados (k≥4) 🔒</p>
+  <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">${a.teams.map(t=>{if(t.anon)return `<div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5 flex flex-col justify-center items-center text-center"><h3 class="font-semibold">${t.name}</h3><p class="text-xs text-zinc-500 mt-2">🔒 Datos ocultos</p><p class="text-[10px] text-zinc-600 mt-1">Menos de 4 personas. Se protege la privacidad.</p></div>`;const c=t.burnout>65?"rose":t.burnout>45?"amber":"emerald";return `<div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5"><div class="flex justify-between"><h3 class="font-semibold">${t.name}</h3><span class="text-xs text-zinc-500">${t.size}p · ${t.samples} señales</span></div><div class="mt-3 space-y-2 text-sm"><div><div class="flex justify-between"><span class="text-zinc-400">WorkPulse</span><span>${t.workpulse}</span></div><div class="h-1.5 bg-zinc-800 rounded-full mt-1"><div class="h-1.5 bg-indigo-500 rounded-full" style="width:${t.workpulse}%"></div></div></div><div><div class="flex justify-between"><span class="text-zinc-400">Burnout</span><span class="text-${c}-400">${t.burnout}</span></div><div class="h-1.5 bg-zinc-800 rounded-full mt-1"><div class="h-1.5 bg-${c}-500 rounded-full" style="width:${t.burnout}%"></div></div></div></div></div>`;}).join("")}</div>`;}
+
+function RiskV(){const a=aggregate();const vis=a.teams.filter(t=>!t.anon);if(!vis.length)return `<h2 class="text-2xl font-bold mb-6">Riesgo de Rotación</h2>${emptyState()}`;
+  return `<h2 class="text-2xl font-bold mb-6">Riesgo de Rotación por Equipo</h2><div class="space-y-3">${vis.sort((a,b)=>b.retention-a.retention).map(t=>{const c=t.retention>50?"rose":t.retention>30?"amber":"emerald";return `<div class="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 flex items-center gap-4"><span class="w-32 font-medium">${t.name}</span><div class="flex-1 h-2 bg-zinc-800 rounded-full"><div class="h-2 bg-${c}-500 rounded-full" style="width:${t.retention}%"></div></div><span class="text-${c}-400 font-semibold w-12 text-right">${t.retention}%</span></div>`;}).join("")}</div>`;}
+
+function TopicsV(){const a=aggregate();if(!a.total)return `<h2 class="text-2xl font-bold mb-6">Temas frecuentes</h2>${emptyState()}`;
+  return `<h2 class="text-2xl font-bold mb-1">Temas más conversados</h2><p class="text-sm text-zinc-400 mb-6">Qué preocupa a la organización · extraído de ${a.total} conversaciones</p><div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6"><canvas id="topicChart" height="120"></canvas></div>`;}
+function drawTopics(){const a=aggregate();const ctx=document.getElementById("topicChart");if(!ctx)return;const ent=Object.entries(a.topicCount).sort((x,y)=>y[1]-x[1]);
+  chartRefs.push(new Chart(ctx,{type:"bar",data:{labels:ent.map(e=>TOPICS[e[0]]||e[0]),datasets:[{data:ent.map(e=>e[1]),backgroundColor:"#6366f1"}]},options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid:{color:"#27272a"},ticks:{color:"#a1a1aa"}},y:{grid:{display:false},ticks:{color:"#a1a1aa"}}}}));}
+
+function InsV(){const ins=genInsights();if(!ins.length)return `<h2 class="text-2xl font-bold mb-6">Insights de IA</h2>${emptyState()}`;
+  return `<h2 class="text-2xl font-bold mb-1">Insights Automáticos</h2><p class="text-sm text-zinc-400 mb-6">Generados a partir de patrones reales en las conversaciones</p><div class="space-y-3">${ins.map(i=>{const c={critical:"rose",warning:"amber",info:"indigo"}[i.sev];return `<div class="rounded-2xl border border-${c}-700 bg-${c}-950/20 p-5"><span class="text-xs uppercase text-${c}-400 font-semibold">${i.sev}</span><h3 class="font-semibold mt-1">${i.title}</h3><p class="text-sm text-zinc-300 mt-1">${i.body}</p></div>`;}).join("")}</div>`;}
+
+function ExecV(){const a=aggregate();if(!a.total)return `<h2 class="text-2xl font-bold mb-6">Dashboard Ejecutivo</h2>${emptyState()}`;
+  const r=computeROI();const vis=a.teams.filter(t=>!t.anon);
+  const avgWP=vis.length?Math.round(vis.reduce((s,t)=>s+t.workpulse,0)/vis.length):0;
+  const crit=vis.filter(t=>t.burnout>60);
+  return `<h2 class="text-2xl font-bold mb-6">Dashboard Ejecutivo · ${db().company}</h2>
+  <div class="grid md:grid-cols-4 gap-4 mb-8">${[["WorkPulse Global",avgWP,"indigo"],["Empleados activos",a.users,"zinc"],["Ahorro estimado/año",fmt(r.savings),"emerald"],["ROI",r.roi+"%","emerald"]].map(([l,v,c])=>`<div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5"><p class="text-xs text-zinc-400">${l}</p><p class="text-3xl font-bold text-${c}-400 mt-1">${v}</p></div>`).join("")}</div>
+  <div class="grid md:grid-cols-2 gap-4"><div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6"><h3 class="font-semibold mb-3">Burnout por equipo</h3><canvas id="execChart" height="160"></canvas></div>
+  <div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6"><h3 class="font-semibold mb-2">📈 Predicción</h3><p class="text-sm text-zinc-400">Riesgo financiero por rotación no atendida: <b class="text-rose-400">${fmt(r.turnoverCost*0.3)}</b> próximos 90 días.</p><h3 class="font-semibold mt-4 mb-2">🔥 Riesgo crítico</h3>${crit.length?crit.map(t=>`<p class="text-sm text-rose-400">${t.name} — burnout ${t.burnout}/100</p>`).join(""):'<p class="text-sm text-emerald-400">Sin equipos en zona crítica ✅</p>'}</div></div>
+  <p class="text-xs text-zinc-600 mt-4">Basado en ${a.total} conversaciones reales de ${a.users} empleados.</p>`;}
+function drawExec(){const a=aggregate();const vis=a.teams.filter(t=>!t.anon);const ctx=document.getElementById("execChart");if(!ctx||!vis.length)return;
+  chartRefs.push(new Chart(ctx,{type:"bar",data:{labels:vis.map(t=>t.name),datasets:[{data:vis.map(t=>t.burnout),backgroundColor:vis.map(t=>t.burnout>65?"#f43f5e":t.burnout>45?"#f59e0b":"#10b981")}]},options:{plugins:{legend:{display:false}},scales:{y:{min:0,max:100,grid:{color:"#27272a"},ticks:{color:"#a1a1aa"}},x:{grid:{display:false},ticks:{color:"#a1a1aa"}}}}));}
+
+function RoiV(){const a=aggregate();if(!a.total)return `<h2 class="text-2xl font-bold mb-6">ROI Financiero</h2>${emptyState()}`;
+  const r=computeROI();return `<h2 class="text-2xl font-bold mb-1">ROI Financiero del Bienestar</h2><p class="text-sm text-zinc-400 mb-6">${r.totalEmp} empleados · salario prom. ${fmt(db().avgSalary)} · rotación ${db().turnover}%</p>
+  <div class="grid md:grid-cols-3 gap-4 mb-6">${[["Costo rotación (riesgo)",fmt(r.turnoverCost),"rose"],["Productividad perdida",fmt(r.prodLoss),"amber"],["Ahorro estimado/año",fmt(r.savings),"emerald"]].map(([l,v,c])=>`<div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5"><p class="text-xs text-zinc-400">${l}</p><p class="text-2xl font-bold text-${c}-400 mt-1">${v}</p></div>`).join("")}</div>
+  <div class="rounded-2xl border border-emerald-700 bg-emerald-950/20 p-8 text-center"><p class="text-zinc-400">Retorno de inversión proyectado</p><p class="text-6xl font-bold text-emerald-400 mt-2">${r.roi}%</p><p class="text-sm text-zinc-400 mt-3">Por cada $1 invertido, ~$${(1+r.roi/100).toFixed(2)} en ahorro de rotación y productividad recuperada.</p></div>`;}
+
+/* INIT */
 render("home");
 </script>
 </body>
