@@ -1,255 +1,559 @@
 <!DOCTYPE html>
-<html lang="es" class="dark">
+<html lang="es" class="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TUPARCH3™ — Configurador</title>
+<title>TUPARCH3™ Workforce Intelligence Platform</title>
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script>tailwind.config={darkMode:'class'}</script>
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: { extend: {
+    fontFamily: { sans: ['Inter','system-ui','sans-serif'] },
+    colors: {
+      brand: { 500:'#6366f1', 600:'#4f46e5', 700:'#4338ca' }
+    }
+  }}
+}
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-body{font-family:-apple-system,system-ui,sans-serif}
-.fade-in{animation:f .4s ease}@keyframes f{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
-::-webkit-scrollbar{width:8px}::-webkit-scrollbar-thumb{background:#6366f1;border-radius:8px}
-.glow{box-shadow:0 0 50px rgba(99,102,241,.18)}
+  * { font-family: 'Inter', sans-serif; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  .dark ::-webkit-scrollbar-thumb { background: #334155; }
+  @keyframes fadeUp { from {opacity:0; transform:translateY(12px);} to {opacity:1; transform:translateY(0);} }
+  .animate-fade { animation: fadeUp .4s ease both; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spin { animation: spin 1s linear infinite; }
+  .glass { backdrop-filter: blur(20px); }
 </style>
 </head>
-<body class="bg-zinc-950 text-zinc-100">
-<div id="app"></div>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
+
+<!-- ============ LOGIN ============ -->
+<div id="loginScreen" class="min-h-screen flex items-center justify-center p-4"
+     style="background:linear-gradient(135deg,#0f172a,#1e1b4b,#0c4a6e);">
+  <div class="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 glass p-8 animate-fade">
+    <div class="mb-8 flex flex-col items-center text-center">
+      <div class="mb-4 h-14 w-14 rounded-xl bg-gradient-to-br from-brand-600 to-purple-600 flex items-center justify-center">
+        <svg class="h-7 w-7 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      </div>
+      <h1 class="text-xl font-bold text-white">TUPARCH3™</h1>
+      <p class="text-sm text-slate-400">Workforce Intelligence Platform</p>
+    </div>
+    <form id="loginForm" class="space-y-4">
+      <div>
+        <label class="text-xs font-medium text-slate-300">Correo Corporativo</label>
+        <input id="loginEmail" type="email" required value="admin@empresa.com"
+          class="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-brand-500">
+      </div>
+      <div>
+        <label class="text-xs font-medium text-slate-300">Contraseña (cédula)</label>
+        <input id="loginPass" type="password" required value="1023456789"
+          class="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-brand-500">
+      </div>
+      <p id="loginError" class="text-sm text-red-400 hidden"></p>
+      <button type="submit"
+        class="w-full rounded-lg bg-gradient-to-r from-brand-600 to-purple-600 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition">
+        Iniciar Sesión
+      </button>
+    </form>
+    <p class="mt-6 text-center text-xs text-slate-500">Demo: admin@empresa.com / 1023456789</p>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app" class="hidden h-screen flex">
+  <!-- Sidebar -->
+  <aside id="sidebar" class="hidden lg:flex w-64 flex-col border-r border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 glass">
+    <div class="flex h-16 items-center gap-2 border-b border-slate-200 dark:border-slate-800 px-6">
+      <div class="h-9 w-9 rounded-lg bg-gradient-to-br from-brand-600 to-purple-600 flex items-center justify-center">
+        <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      </div>
+      <div><p class="text-sm font-bold">TUPARCH3™</p><p class="text-[10px] text-slate-500">Workforce Intelligence</p></div>
+    </div>
+    <nav id="nav" class="flex-1 space-y-1 p-3"></nav>
+    <button onclick="logout()" class="m-3 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+      Cerrar Sesión
+    </button>
+  </aside>
+
+  <div class="flex flex-1 flex-col overflow-hidden">
+    <header class="flex h-16 items-center justify-between border-b border-slate-200 dark:border-slate-800 px-6">
+      <button onclick="toggleSidebar()" class="lg:hidden"><svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>
+      <div></div>
+      <div class="flex items-center gap-3">
+        <button onclick="toggleTheme()" class="rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-slate-800">
+          <svg id="themeIcon" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>
+        </button>
+        <span id="userName" class="text-sm font-medium"></span>
+      </div>
+    </header>
+    <main id="main" class="flex-1 overflow-y-auto p-6"></main>
+  </div>
+</div>
+
 <script>
 /* ============================================================
-   TUPARCH3 — Configurador con datos editables (localStorage)
-============================================================ */
-let OPENAI_API_KEY = localStorage.getItem('t3_key')||"";
+   TUPARCH3 — Motor de datos, analítica e IA (cliente)
+   ============================================================ */
+const DB_KEY = 'tuparch3_db';
+let DB = { employees: [], users: [], conversations: [] };
+let CURRENT_USER = null;
 
-/* ---------- DATOS POR DEFECTO ---------- */
-const DEFAULT={
-  company:{name:"Mi Empresa",slug:"miempresa",industry:"Tecnología",avgSalary:55000,turnover:18,contact:"Director"},
-  teams:[
-    {name:"Equipo A",workpulse:72,burnout:38,retention:22,size:14},
-    {name:"Equipo B",workpulse:54,burnout:61,retention:48,size:9},
-    {name:"Equipo C",workpulse:43,burnout:74,retention:65,size:11},
-  ],
-  insights:[
-    {sev:"critical",title:"Riesgo de burnout detectado",body:"Un equipo muestra burnout elevado. Requiere atención inmediata."},
-    {sev:"warning",title:"Caída de motivación",body:"Tendencia a la baja en bienestar este mes."},
-  ]
+/* ---------- Persistencia ---------- */
+function saveDB(){ localStorage.setItem(DB_KEY, JSON.stringify(DB)); }
+function loadDB(){ const d = localStorage.getItem(DB_KEY); if(d) DB = JSON.parse(d); }
+
+/* ---------- Seed Demo ---------- */
+function seedDemo(){
+  const regionales=['Bogotá','Medellín','Cali','Barranquilla'];
+  const areas=['Comercial','Operaciones','Marketing','Servicio'];
+  const cargos=['Asesor','Ejecutivo','Coordinador','Gerente'];
+  const motivos=['Mejor oferta laboral','Estrés','Falta de crecimiento','Salario','Liderazgo deficiente'];
+  const rand=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+  const pick=a=>a[rand(0,a.length-1)];
+
+  DB={employees:[],users:[],conversations:[]};
+  DB.users.push({email:'admin@empresa.com',pass:'1023456789',role:'ADMIN',name:'Administrador',mustChange:false,empId:null});
+  DB.users.push({email:'rrhh@empresa.com',pass:'1023456789',role:'RRHH',name:'Talento Humano',mustChange:false,empId:null});
+
+  const leaders=[];
+  for(let i=0;i<4;i++){
+    const ced=`100${rand(1000000,9999999)}`, email=`lider${i}@empresa.com`;
+    const e={id:'L'+i,fullName:`Líder ${i+1}`,cedula:ced,email,regional:regionales[i],
+      area:pick(areas),team:'Dirección',position:'Gerente',level:'Directivo',city:regionales[i],country:'Colombia',
+      managerEmail:null,status:'ACTIVO',hireDate:'2019-01-01',exitDate:null,exitReason:null,
+      baseSalary:8000000,salesGoal:100000000,salesAccumulated:rand(70,110)*1000000,
+      numClients:rand(20,80),numDeals:rand(10,40),absentDays:rand(0,8),medicalLeaves:rand(0,2),
+      performance:rand(70,95),isCritical:true,replacementCost:25000000,trainingCost:8000000,replTime:90,
+      stress:rand(20,60),motivation:rand(60,95),satisfaction:rand(60,90)};
+    computeScores(e); DB.employees.push(e); leaders.push(e);
+    DB.users.push({email,pass:ced,role:'LIDER',name:e.fullName,mustChange:true,empId:e.id});
+  }
+
+  for(let i=0;i<80;i++){
+    const ced=`${rand(1000000000,1099999999)}`, email=`colab${i}@empresa.com`;
+    const leader=pick(leaders), retired=Math.random()<0.15, goal=rand(20,60)*1000000;
+    const e={id:'E'+i,fullName:`Colaborador ${i+1}`,cedula:ced,email,
+      regional:leader.regional,area:leader.area,team:`Equipo ${rand(1,3)}`,position:pick(cargos),level:'Profesional',
+      city:leader.regional,country:'Colombia',managerEmail:leader.email,managerName:leader.fullName,
+      status:retired?'RETIRADO':'ACTIVO',hireDate:`${rand(2018,2023)}-0${rand(1,9)}-15`,
+      exitDate:retired?`2024-0${rand(1,9)}-15`:null,exitReason:retired?pick(motivos):null,
+      baseSalary:rand(1500,4000)*1000,salesGoal:goal,salesAccumulated:Math.round(goal*(rand(50,120)/100)),
+      numClients:rand(5,50),numDeals:rand(2,20),absentDays:rand(0,25),medicalLeaves:rand(0,5),
+      performance:rand(40,98),isCritical:Math.random()<0.2,
+      replacementCost:rand(5,20)*1000000,trainingCost:rand(2,6)*1000000,replTime:rand(30,120),
+      stress:rand(20,90),motivation:rand(30,95),satisfaction:rand(40,90)};
+    computeScores(e); DB.employees.push(e);
+    DB.users.push({email,pass:ced,role:'COLABORADOR',name:e.fullName,mustChange:true,empId:e.id});
+  }
+  saveDB();
+}
+
+/* ---------- Motor de Scores ---------- */
+const clamp=(n,a=0,b=100)=>Math.max(a,Math.min(b,n));
+function computeScores(e){
+  e.burnoutRisk=Math.round(clamp(e.stress*0.6+(100-e.motivation)*0.4));
+  e.engagement=Math.round(clamp(e.motivation*0.5+e.satisfaction*0.5));
+  let risk=0;
+  risk+=(e.stress/100)*18;
+  risk+=(e.burnoutRisk/100)*15;
+  risk+=((100-e.motivation)/100)*18;
+  risk+=((100-e.satisfaction)/100)*10;
+  risk+=clamp((e.absentDays/30)*100)/100*10;
+  if(e.salesGoal>0){const ach=(e.salesAccumulated/e.salesGoal)*100; if(ach<80)risk+=((80-ach)/80)*10;}
+  if(e.performance!=null)risk+=((100-e.performance)/100)*8;
+  if(e.hireDate){const yrs=(Date.now()-new Date(e.hireDate))/(365*864e5); if(yrs<1||yrs>7)risk+=5;}
+  e.retentionRisk=Math.round(clamp(risk));
+  e.attritionRisk=Math.round(clamp(risk*0.9));
+  e.riskLevel=e.retentionRisk>=75?'CRITICO':e.retentionRisk>=50?'ALTO':e.retentionRisk>=30?'MEDIO':'BAJO';
+}
+
+/* ---------- Métricas Agregadas ---------- */
+const active=()=>DB.employees.filter(e=>e.status==='ACTIVO');
+const avg=(arr,f)=>arr.length?Math.round(arr.reduce((a,e)=>a+(f(e)||0),0)/arr.length):0;
+
+function workforceHealth(){
+  const a=active();
+  return {
+    health:avg(a,e=>100-e.stress*0.4+e.engagement*0.6-30),
+    motivation:avg(a,e=>e.motivation),stress:avg(a,e=>e.stress),
+    burnout:avg(a,e=>e.burnoutRisk),satisfaction:avg(a,e=>e.satisfaction),
+    engagement:avg(a,e=>e.engagement),total:a.length
+  };
+}
+function commercial(){
+  const a=active().filter(e=>e.salesGoal>0);
+  const seg=key=>{
+    const g={};
+    a.forEach(e=>{const k=e[key]||'N/A';g[k]??={goal:0,act:0,n:0};g[k].goal+=e.salesGoal;g[k].act+=e.salesAccumulated;g[k].n++;});
+    return Object.entries(g).map(([name,v])=>({name,achievement:v.goal?+(v.act/v.goal*100).toFixed(1):0,n:v.n})).sort((x,y)=>y.achievement-x.achievement);
+  };
+  const tg=a.reduce((s,e)=>s+e.salesGoal,0), ta=a.reduce((s,e)=>s+e.salesAccumulated,0);
+  return {overall:tg?+(ta/tg*100).toFixed(1):0,totalGoal:tg,totalActual:ta,
+    byRegional:seg('regional'),byCity:seg('city'),byArea:seg('area'),byTeam:seg('team'),byPosition:seg('position'),byManager:seg('managerName')};
+}
+function turnover(){
+  const all=DB.employees, ret=all.filter(e=>e.status==='RETIRADO'&&e.exitDate);
+  const period=m=>{const cut=Date.now()-m*30*864e5;const x=ret.filter(e=>new Date(e.exitDate)>=cut).length;return +(x/(active().length||1)*100).toFixed(2);};
+  const seg=key=>{const g={};all.forEach(e=>{const k=e[key]||'N/A';g[k]??={ex:0,t:0};g[k].t++;if(e.status==='RETIRADO')g[k].ex++;});return Object.entries(g).map(([name,v])=>({name,rate:+(v.ex/v.t*100).toFixed(1),ex:v.ex,t:v.t})).sort((a,b)=>b.rate-a.rate);};
+  const reasons={};ret.forEach(e=>{const r=e.exitReason||'N/E';reasons[r]=(reasons[r]||0)+1;});
+  return {monthly:period(1),quarterly:period(3),semiannual:period(6),annual:period(12),
+    byCity:seg('city'),byRegional:seg('regional'),byArea:seg('area'),byPosition:seg('position'),
+    causal:Object.entries(reasons).map(([reason,count])=>({reason,count})).sort((a,b)=>b.count-a.count)};
+}
+function financial(){
+  const all=DB.employees,ret=all.filter(e=>e.status==='RETIRADO'),atRisk=active().filter(e=>e.retentionRisk>=50);
+  const repl=ret.reduce((s,e)=>s+e.replacementCost,0),train=ret.reduce((s,e)=>s+e.trainingCost,0);
+  const prodLoss=ret.reduce((s,e)=>s+(e.baseSalary/30)*e.replTime,0);
+  const projRisk=atRisk.reduce((s,e)=>s+(e.replacementCost+e.trainingCost)*(e.retentionRisk/100),0);
+  const total=repl+train+prodLoss;
+  const roi=projRisk>0?Math.round(((projRisk-projRisk*0.15)/(projRisk*0.15))*100):0;
+  return {turnoverCost:total,replacementCost:repl,trainingCost:train,productivityLoss:prodLoss,
+    financialRisk:projRisk,economicImpact:total+projRisk,roi,atRisk:atRisk.length};
+}
+function correlations(){
+  const e=active();
+  const pearson=(xs,ys)=>{const n=xs.length;if(n<3)return 0;const mx=xs.reduce((a,b)=>a+b,0)/n,my=ys.reduce((a,b)=>a+b,0)/n;let num=0,dx=0,dy=0;for(let i=0;i<n;i++){num+=(xs[i]-mx)*(ys[i]-my);dx+=(xs[i]-mx)**2;dy+=(ys[i]-my)**2;}return dx&&dy?+(num/Math.sqrt(dx*dy)).toFixed(2):0;};
+  const stress=e.map(x=>x.stress),mot=e.map(x=>x.motivation),
+    ach=e.map(x=>x.salesGoal>0?x.salesAccumulated/x.salesGoal*100:0),ret=e.map(x=>x.retentionRisk),abs=e.map(x=>x.absentDays);
+  const ins=[];
+  const cSA=pearson(stress,ach); if(cSA<-0.15)ins.push(`Los colaboradores con altos niveles de estrés presentan una reducción promedio del ${Math.abs(Math.round(cSA*20))}% en cumplimiento de metas.`);
+  const cMR=pearson(mot,ret); if(cMR<-0.15)ins.push(`Los colaboradores con mayor motivación muestran menor intención de renuncia (correlación ${cMR}).`);
+  const cSAbs=pearson(stress,abs); if(cSAbs>0.15)ins.push(`El estrés laboral se correlaciona con mayor ausentismo (${cSAbs}).`);
+  const cMA=pearson(mot,ach); if(cMA>0.15)ins.push(`Mayor motivación se asocia con mejor cumplimiento comercial (${cMA}).`);
+  if(!ins.length)ins.push('Cargando suficientes datos para generar correlaciones estadísticas significativas.');
+  return ins;
+}
+
+/* ---------- Helpers UI ---------- */
+const fmtCOP=n=>new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(n||0);
+const riskColor=l=>({BAJO:'text-emerald-500 bg-emerald-500/10',MEDIO:'text-amber-500 bg-amber-500/10',ALTO:'text-orange-500 bg-orange-500/10',CRITICO:'text-red-500 bg-red-500/10'}[l]||'text-slate-500 bg-slate-500/10');
+
+function kpi(title,value,sub,accent){
+  const acc={blue:'from-blue-500/10 border-blue-500/20',green:'from-emerald-500/10 border-emerald-500/20',amber:'from-amber-500/10 border-amber-500/20',red:'from-red-500/10 border-red-500/20',purple:'from-purple-500/10 border-purple-500/20'}[accent];
+  return `<div class="animate-fade rounded-xl border bg-gradient-to-br to-transparent ${acc} p-5 dark:bg-slate-900/40">
+    <p class="text-xs font-medium text-slate-500 uppercase tracking-wide">${title}</p>
+    <p class="mt-2 text-3xl font-bold">${value}</p>
+    ${sub?`<p class="mt-1 text-xs text-slate-500">${sub}</p>`:''}
+  </div>`;
+}
+function card(title,body,extra=''){
+  return `<div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 ${extra}">
+    ${title?`<div class="p-5 pb-2"><h3 class="text-sm font-semibold">${title}</h3></div>`:''}
+    <div class="p-5 pt-2">${body}</div></div>`;
+}
+function bar(name,pct,n){
+  return `<div class="flex items-center gap-3"><span class="w-28 truncate text-sm">${name}</span>
+    <div class="flex-1 h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+      <div class="h-full rounded-full bg-gradient-to-r from-brand-500 to-purple-500" style="width:${Math.min(pct,100)}%"></div></div>
+    <span class="w-12 text-right text-sm font-semibold">${pct}%</span></div>`;
+}
+
+/* ============================================================
+   VISTAS
+   ============================================================ */
+let activeChart=null;
+function destroyChart(){ if(activeChart){activeChart.destroy();activeChart=null;} }
+
+const views={
+  executive(){
+    const h=workforceHealth(),c=commercial(),t=turnover(),f=financial(),ins=correlations();
+    setTimeout(()=>renderRadar(h),50);
+    return `<h1 class="text-2xl font-bold">Dashboard Ejecutivo</h1>
+      <p class="text-sm text-slate-500 mb-6">Inteligencia organizacional · ${h.total} colaboradores activos</p>
+      <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4 mb-6">
+        ${kpi('Workforce Health',h.health,'Salud organizacional','green')}
+        ${kpi('Cumplimiento Comercial',c.overall+'%',fmtCOP(c.totalActual),'blue')}
+        ${kpi('Rotación Anual',t.annual+'%','Tasa acumulada','amber')}
+        ${kpi('Impacto Económico',fmtCOP(f.economicImpact),f.atRisk+' en riesgo','red')}
+      </div>
+      <div class="grid gap-6 lg:grid-cols-3 mb-6">
+        <div class="lg:col-span-2">${card('Workforce Health · Componentes','<canvas id="radar" height="260"></canvas>')}</div>
+        ${card('🧠 Workforce Insights™','<ul class="space-y-3">'+ins.map(i=>`<li class="flex gap-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 p-3 text-sm">✨ ${i}</li>`).join('')+'</ul>')}
+      </div>
+      ${card('Cumplimiento por Regional','<div class="space-y-3">'+c.byRegional.slice(0,6).map(r=>bar(r.name,r.achievement)).join('')+'</div>')}`;
+  },
+
+  commercial(){
+    const c=commercial();
+    const seg=(t,d)=>card(t,'<div class="space-y-3">'+d.slice(0,8).map(r=>bar(r.name,r.achievement)).join('')+'</div>');
+    return `<h1 class="text-2xl font-bold">Productividad Comercial</h1>
+      <p class="text-sm text-slate-500 mb-6">Análisis de cumplimiento de metas</p>
+      <div class="grid gap-4 md:grid-cols-3 mb-6">
+        ${kpi('Cumplimiento General',c.overall+'%','','blue')}
+        ${kpi('Meta Total',fmtCOP(c.totalGoal),'','purple')}
+        ${kpi('Ventas Acumuladas',fmtCOP(c.totalActual),'','green')}
+      </div>
+      <div class="grid gap-6 lg:grid-cols-2 mb-6">${seg('Por Regional',c.byRegional)}${seg('Por Área',c.byArea)}</div>
+      <div class="grid gap-6 lg:grid-cols-2 mb-6">${seg('Por Equipo',c.byTeam)}${seg('Por Cargo',c.byPosition)}</div>
+      ${seg('Por Jefe Directo',c.byManager)}`;
+  },
+
+  hr(){
+    const t=turnover(),c=commercial();
+    const a=active().slice().sort((x,y)=>y.engagement-x.engagement);
+    const topTeams=c.byTeam.slice(0,5),riskTeams=[...c.byTeam].sort((x,y)=>x.achievement-y.achievement).slice(0,5);
+    const leaderRank=DB.employees.filter(e=>DB.employees.some(r=>r.managerEmail===e.email))
+      .map(l=>{const team=DB.employees.filter(r=>r.managerEmail===l.email&&r.status==='ACTIVO');
+        return{name:l.fullName,score:avg(team,e=>e.engagement),n:team.length};}).sort((x,y)=>y.score-x.score);
+    const heat=DB.employees.reduce((m,e)=>{const k=e.area||'N/A';m[k]??=[];if(e.status==='ACTIVO')m[k].push(e.stress);return m;},{});
+    return `<h1 class="text-2xl font-bold">Recursos Humanos</h1>
+      <p class="text-sm text-slate-500 mb-6">Heatmaps · Rankings · Análisis de equipos</p>
+      <div class="grid gap-6 lg:grid-cols-2 mb-6">
+        ${card('🏆 Ranking de Líderes','<div class="space-y-2">'+leaderRank.map((l,i)=>`<div class="flex justify-between text-sm"><span><span class="text-slate-400 mr-2">#${i+1}</span>${l.name} <span class="text-slate-400">(${l.n})</span></span><span class="font-semibold">${l.score}</span></div>`).join('')+'</div>')}
+        ${card('🔥 Heatmap de Estrés por Área','<div class="space-y-2">'+Object.entries(heat).map(([area,arr])=>{const v=avg(arr.map(s=>({stress:s})),e=>e.stress)||(arr.reduce((a,b)=>a+b,0)/arr.length||0);const color=v>60?'bg-red-500':v>40?'bg-amber-500':'bg-emerald-500';return `<div class="flex items-center gap-3"><span class="w-28 text-sm">${area}</span><div class="flex-1 h-6 rounded ${color}" style="opacity:${0.3+v/150}"></div><span class="w-10 text-right text-sm font-semibold">${Math.round(v)}</span></div>`;}).join('')+'</div>')}
+      </div>
+      <div class="grid gap-6 lg:grid-cols-2">
+        ${card('✅ Equipos con Mejor Desempeño','<div class="space-y-3">'+topTeams.map(r=>bar(r.name,r.achievement)).join('')+'</div>')}
+        ${card('⚠️ Equipos en Riesgo','<div class="space-y-3">'+riskTeams.map(r=>bar(r.name,r.achievement)).join('')+'</div>')}
+      </div>`;
+  },
+
+  retention(){
+    const t=turnover();
+    const atRisk=active().filter(e=>e.retentionRisk>=50).sort((a,b)=>b.retentionRisk-a.retentionRisk).slice(0,20);
+    return `<h1 class="text-2xl font-bold">Retención & Rotación</h1>
+      <p class="text-sm text-slate-500 mb-6">Retention Risk Score™ · Predicción de abandono</p>
+      <div class="grid gap-4 md:grid-cols-4 mb-6">
+        ${kpi('Rotación Mensual',t.monthly+'%','','blue')}
+        ${kpi('Rotación Trimestral',t.quarterly+'%','','purple')}
+        ${kpi('Rotación Semestral',t.semiannual+'%','','amber')}
+        ${kpi('Rotación Anual',t.annual+'%','','red')}
+      </div>
+      <div class="grid gap-6 lg:grid-cols-2">
+        ${card('⚠️ Empleados en Riesgo','<div class="space-y-2 max-h-96 overflow-y-auto">'+atRisk.map(e=>`<div class="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-800 p-3"><div><p class="text-sm font-medium">${e.fullName}</p><p class="text-xs text-slate-500">${e.position} · ${e.area}</p></div><div class="flex items-center gap-3"><span class="rounded-full px-2.5 py-0.5 text-xs font-semibold ${riskColor(e.riskLevel)}">${e.riskLevel}</span><span class="text-lg font-bold">${e.retentionRisk}</span></div></div>`).join('')+'</div>')}
+        ${card('📋 Ranking de Causales de Retiro','<div class="space-y-2">'+t.causal.map((c,i)=>`<div class="flex justify-between text-sm"><span><span class="text-slate-400 mr-2">#${i+1}</span>${c.reason}</span><span class="font-semibold">${c.count}</span></div>`).join('')+'</div>')}
+      </div>`;
+  },
+
+  financial(){
+    const f=financial();
+    return `<h1 class="text-2xl font-bold">Dashboard Financiero</h1>
+      <p class="text-sm text-slate-500 mb-6">Impacto económico de la rotación</p>
+      <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3 mb-6">
+        ${kpi('Costo de Rotación',fmtCOP(f.turnoverCost),'','red')}
+        ${kpi('Costo de Reemplazo',fmtCOP(f.replacementCost),'','amber')}
+        ${kpi('Costo Capacitación',fmtCOP(f.trainingCost),'','purple')}
+        ${kpi('Productividad Perdida',fmtCOP(f.productivityLoss),'','blue')}
+        ${kpi('Riesgo Financiero',fmtCOP(f.financialRisk),f.atRisk+' empleados','red')}
+        ${kpi('ROI de Retención',f.roi+'%','Retorno estimado','green')}
+      </div>
+      ${card('Impacto Económico Total',`<p class="text-4xl font-bold">${fmtCOP(f.economicImpact)}</p><p class="text-sm text-slate-500 mt-2">Suma de costos de rotación histórica + riesgo proyectado de abandono.</p>`)}`;
+  },
+
+  import(){
+    return `<div class="mx-auto max-w-2xl">
+      <h1 class="text-2xl font-bold">Importación Masiva</h1>
+      <p class="text-sm text-slate-500 mb-6">Carga Excel (.xlsx). Se crearán usuarios, organigrama y scores automáticamente.</p>
+      ${card('',`<label class="flex cursor-pointer flex-col items-center gap-3 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 p-10 hover:border-brand-500 transition">
+        <svg class="h-10 w-10 text-brand-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
+        <span id="fileName" class="text-sm font-medium">Selecciona archivo .xlsx</span>
+        <input id="fileInput" type="file" accept=".xlsx,.xls" class="hidden" onchange="onFile(event)">
+      </label>
+      <button onclick="processFile()" id="importBtn" class="mt-4 w-full rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50" disabled>Importar y Procesar</button>
+      <div class="mt-4 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 text-xs text-slate-500"><b>Columnas:</b> ID Empleado, Nombre Completo, Cédula, Correo Corporativo, Regional, Área, Equipo, Cargo, Jefe Directo, Correo Jefe Directo, Estado, Salario Base Mensual, Meta de Ventas Mensual, Ventas Acumuladas Mes, Motivo de Retiro, Evaluación de Desempeño, Costo de Reemplazo... (47 columnas)`)}
+      <div id="importResult" class="mt-6"></div>
+    </div>`;
+  },
+
+  coach(){
+    setTimeout(()=>scrollChat(),50);
+    return `<div class="mx-auto max-w-3xl h-[calc(100vh-8rem)] flex flex-col">
+      <div class="mb-4 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
+        <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-brand-600 to-purple-600 flex items-center justify-center">
+          <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a3 3 0 00-3 3v7a3 3 0 006 0V5a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg>
+        </div>
+        <div><h1 class="font-semibold">TUPARCH3 AI Coach™</h1><p class="text-xs text-slate-500">Tu coach organizacional · Confidencial</p></div>
+      </div>
+      <div id="chatBox" class="flex-1 space-y-4 overflow-y-auto py-2"></div>
+      <div class="mt-4 flex gap-2 border-t border-slate-200 dark:border-slate-800 pt-4">
+        <input id="chatInput" onkeydown="if(event.key==='Enter')sendChat()" placeholder="Escribe tu mensaje..."
+          class="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-transparent px-4 py-3 text-sm outline-none focus:border-brand-500">
+        <button onclick="sendChat()" class="h-12 w-12 rounded-xl bg-brand-600 text-white hover:bg-brand-700 flex items-center justify-center">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+        </button>
+      </div>
+    </div>`;
+  }
 };
-function loadData(){const s=localStorage.getItem('t3_data');return s?JSON.parse(s):JSON.parse(JSON.stringify(DEFAULT));}
-function saveData(d){localStorage.setItem('t3_data',JSON.stringify(d));}
-let DATA=loadData();
-let SESSION=null,CURRENT="home";
 
-/* ---------- ROI ---------- */
-function computeROI(){
-  const teams=DATA.teams,avgSalary=DATA.company.avgSalary,tr=DATA.company.turnover/100;
-  const totalEmp=teams.reduce((a,t)=>a+t.size,0)||1;
-  const totalSalary=totalEmp*avgSalary;
-  const turnoverCost=totalSalary*tr*0.75;
-  const improvedCost=totalSalary*Math.max(tr-0.06,0.05)*0.75;
-  const savings=turnoverCost-improvedCost;
-  const highRisk=teams.filter(t=>t.burnout>65);
-  const prodLoss=highRisk.reduce((a,t)=>a+t.size*avgSalary*0.15,0);
-  const platformCost=totalEmp*96;
-  const estimatedSavings=savings+prodLoss*0.5;
-  const roi=platformCost?Math.round((estimatedSavings-platformCost)/platformCost*100):0;
-  return{turnoverCost:Math.round(turnoverCost),prodLoss:Math.round(prodLoss),savings:Math.round(estimatedSavings),roi,totalEmp};
+/* ---------- Charts ---------- */
+function renderRadar(h){
+  destroyChart();
+  const ctx=document.getElementById('radar'); if(!ctx)return;
+  const dark=document.documentElement.classList.contains('dark');
+  activeChart=new Chart(ctx,{type:'radar',data:{labels:['Motivación','Satisfacción','Compromiso','Bajo Estrés','Sin Burnout'],
+    datasets:[{data:[h.motivation,h.satisfaction,h.engagement,100-h.stress,100-h.burnout],backgroundColor:'rgba(99,102,241,.25)',borderColor:'#6366f1',pointBackgroundColor:'#6366f1'}]},
+    options:{plugins:{legend:{display:false}},scales:{r:{min:0,max:100,grid:{color:dark?'#334155':'#e2e8f0'},pointLabels:{color:dark?'#94a3b8':'#475569'},ticks:{display:false}}}}});
 }
-const fmt=n=>"$"+Math.round(n).toLocaleString('en-US');
 
-/* ---------- IA ---------- */
-async function aiReply(message,history){
-  if(OPENAI_API_KEY){
-    try{const res=await fetch("https://api.openai.com/v1/chat/completions",{method:"POST",
-      headers:{"Content-Type":"application/json","Authorization":"Bearer "+OPENAI_API_KEY},
-      body:JSON.stringify({model:"gpt-4o-mini",temperature:.6,messages:[
-        {role:"system",content:"Eres TUPARCH3 Coach de bienestar laboral. NO terapeuta. Coaching: estrés, carga, motivación, liderazgo. Cálido, breve, en español."},
-        ...history,{role:"user",content:message}]})});
-      const d=await res.json();return d.choices[0].message.content;}
-    catch(e){return "⚠️ Error de conexión IA.";}}
-  const m=message.toLowerCase();
-  if(m.includes("estr")||m.includes("cansad")||m.includes("agot"))return "Entiendo la presión. 🌿 Identifica las 3 tareas que más te drenan esta semana. ¿Cuál podrías delegar o aplazar 48h?";
-  if(m.includes("jefe")||m.includes("lider"))return "El liderazgo impacta el bienestar. ¿Qué necesitas: claridad, reconocimiento o autonomía? Preparemos una conversación breve.";
-  if(m.includes("motiv"))return "La motivación cae al perder el propósito. 🎯 ¿Recuerdas un momento donde tu trabajo se sintió valioso?";
-  return "Gracias por compartirlo. 🙏 ¿Es puntual de esta semana o llevas tiempo así?";
+/* ---------- AI Coach (local inteligente) ---------- */
+const chatHistory=[{role:'assistant',content:'Hola, soy TUPARCH3 AI Coach™. Estoy aquí para acompañarte en tu desarrollo y bienestar laboral. ¿En qué puedo ayudarte hoy?'}];
+function scrollChat(){
+  const box=document.getElementById('chatBox'); if(!box)return;
+  box.innerHTML=chatHistory.map(m=>`<div class="flex ${m.role==='user'?'justify-end':'justify-start'} animate-fade"><div class="max-w-[80%] rounded-2xl px-4 py-3 text-sm ${m.role==='user'?'bg-brand-600 text-white':'bg-slate-100 dark:bg-slate-800'}">${m.content}</div></div>`).join('');
+  box.scrollTop=box.scrollHeight;
 }
-function classify(m){m=m.toLowerCase();if(m.includes("estr")||m.includes("cansad"))return"burnout";if(m.includes("jefe")||m.includes("lider"))return"leadership";if(m.includes("motiv"))return"motivation";if(m.includes("carga"))return"workload";return"communication";}
+function coachReply(msg){
+  const t=msg.toLowerCase();
+  // Clasificación local
+  let cat='General';
+  if(/estr[eé]s|presi[oó]n|agobi|saturad/.test(t))cat='Estrés';
+  else if(/renunci|irme|dejar|otra empresa|oferta/.test(t))cat='Intención de renuncia';
+  else if(/motivaci|desanim|sin ganas|aburri/.test(t))cat='Motivación';
+  else if(/jefe|l[ií]der|equipo/.test(t))cat='Liderazgo';
+  else if(/meta|venta|cumplimiento|objetivo/.test(t))cat='Metas comerciales';
+  else if(/tiempo|organiz|prioriz/.test(t))cat='Gestión del tiempo';
+  else if(/reconoc|valorad/.test(t))cat='Reconocimiento';
 
-/* ---------- ROUTER ---------- */
-function go(v){window.scrollTo(0,0);render(v);}
-function render(v="home"){CURRENT=v;const a=document.getElementById("app");let h="";
-  if(v==="home")h=Home();else if(v==="config")h=Config();else if(v==="app"){if(!SESSION){go("login");return;}h=Shell();}else if(v==="login")h=Login();
-  a.innerHTML=`<div class="fade-in">${h}</div>`;if(v==="app")mountApp();}
-
-/* ---------- HOME ---------- */
-function Home(){return `
-<nav class="flex justify-between items-center px-6 md:px-12 py-5 max-w-7xl mx-auto">
-  <span class="font-bold text-xl">TUPARCH3™</span>
-  <button onclick="go('config')" class="rounded-full bg-zinc-800 px-4 py-2 text-sm">⚙️ Configurar datos</button>
-</nav>
-<section class="max-w-3xl mx-auto text-center px-6 pt-24 pb-16">
-  <span class="inline-block rounded-full border border-indigo-700 px-4 py-1 text-xs text-indigo-400 mb-6">Workforce Intelligence · IA</span>
-  <h1 class="text-4xl md:text-5xl font-bold leading-tight">Demo personalizada para<br><span class="text-indigo-500">${DATA.company.name}</span></h1>
-  <p class="mt-6 text-zinc-400">Convierte el bienestar laboral en ROI medible. Coaching con IA, detección de burnout y analítica de rotación.</p>
-  <div class="mt-10 flex gap-4 justify-center flex-wrap">
-    <button onclick="go('login')" class="rounded-xl bg-indigo-600 hover:bg-indigo-700 px-8 py-4 font-medium glow">▶ Iniciar Demo</button>
-    <button onclick="go('config')" class="rounded-xl border border-zinc-700 px-8 py-4 font-medium">⚙️ Editar mis datos</button>
-  </div>
-</section>
-<section class="max-w-5xl mx-auto px-6 pb-20 grid md:grid-cols-3 gap-4">
-  ${[["🤖","Chat IA","Coaching de bienestar 24/7"],["📊","Analytics","Patrones anonimizados"],["💰","ROI","Bienestar en dinero"]].map(([i,t,d])=>`<div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6"><div class="text-3xl">${i}</div><h3 class="font-semibold mt-2">${t}</h3><p class="text-sm text-zinc-400 mt-1">${d}</p></div>`).join("")}
-</section>`;}
-
-/* ---------- CONFIG (EDITOR) ---------- */
-function Config(){return `
-<div class="max-w-3xl mx-auto px-6 py-10">
-  <button onclick="go('home')" class="text-xs text-zinc-500 mb-4">← Volver</button>
-  <h1 class="text-2xl font-bold mb-6">⚙️ Configura tu demo</h1>
-
-  <div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 mb-6">
-    <h2 class="font-semibold mb-4">🏢 Datos de la empresa</h2>
-    <div class="grid md:grid-cols-2 gap-3">
-      <div><label class="text-xs text-zinc-400">Nombre empresa</label><input id="cName" value="${DATA.company.name}" class="w-full mt-1 rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm"></div>
-      <div><label class="text-xs text-zinc-400">Industria</label><input id="cInd" value="${DATA.company.industry}" class="w-full mt-1 rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm"></div>
-      <div><label class="text-xs text-zinc-400">Salario promedio anual</label><input id="cSal" type="number" value="${DATA.company.avgSalary}" class="w-full mt-1 rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm"></div>
-      <div><label class="text-xs text-zinc-400">Rotación actual (%)</label><input id="cTur" type="number" value="${DATA.company.turnover}" class="w-full mt-1 rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm"></div>
-      <div><label class="text-xs text-zinc-400">Persona contacto (saludo IA)</label><input id="cCon" value="${DATA.company.contact}" class="w-full mt-1 rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm"></div>
-    </div>
-  </div>
-
-  <div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 mb-6">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="font-semibold">👥 Equipos / Áreas</h2>
-      <button onclick="addTeam()" class="text-xs bg-indigo-600 px-3 py-1.5 rounded-lg">+ Agregar equipo</button>
-    </div>
-    <p class="text-xs text-zinc-500 mb-3">WorkPulse y Burnout/Rotación van de 0 a 100. Más burnout/rotación = más rojo (más urgencia en demo).</p>
-    <div id="teamList">${teamRows()}</div>
-  </div>
-
-  <div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 mb-6">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="font-semibold">💡 Insights / Alertas</h2>
-      <button onclick="addInsight()" class="text-xs bg-indigo-600 px-3 py-1.5 rounded-lg">+ Agregar insight</button>
-    </div>
-    <div id="insightList">${insightRows()}</div>
-  </div>
-
-  <div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 mb-6">
-    <h2 class="font-semibold mb-3">🔑 OpenAI (opcional, para IA real)</h2>
-    <input id="cKey" type="password" placeholder="sk-... (déjalo vacío para modo demo)" value="${OPENAI_API_KEY}" class="w-full rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm">
-  </div>
-
-  <div class="flex gap-3">
-    <button onclick="saveConfig()" class="flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 py-3 font-medium">💾 Guardar y ver demo</button>
-    <button onclick="resetConfig()" class="rounded-xl bg-zinc-800 px-5 py-3">🔄 Resetear</button>
-  </div>
-</div>`;}
-
-function teamRows(){return DATA.teams.map((t,i)=>`
-<div class="grid grid-cols-12 gap-2 mb-2 items-center">
-  <input data-tn="${i}" value="${t.name}" placeholder="Nombre" class="col-span-4 rounded-lg bg-zinc-800 border border-zinc-700 px-2 py-1.5 text-xs">
-  <input data-tw="${i}" type="number" value="${t.workpulse}" title="WorkPulse" class="col-span-2 rounded-lg bg-zinc-800 border border-zinc-700 px-2 py-1.5 text-xs">
-  <input data-tb="${i}" type="number" value="${t.burnout}" title="Burnout" class="col-span-2 rounded-lg bg-zinc-800 border border-zinc-700 px-2 py-1.5 text-xs">
-  <input data-tr="${i}" type="number" value="${t.retention}" title="Rotación" class="col-span-2 rounded-lg bg-zinc-800 border border-zinc-700 px-2 py-1.5 text-xs">
-  <input data-ts="${i}" type="number" value="${t.size}" title="Personas" class="col-span-1 rounded-lg bg-zinc-800 border border-zinc-700 px-2 py-1.5 text-xs">
-  <button onclick="delTeam(${i})" class="col-span-1 text-rose-400 text-xs">✕</button>
-</div>`).join("")+`<div class="grid grid-cols-12 gap-2 text-[10px] text-zinc-500 mt-1"><span class="col-span-4">Nombre</span><span class="col-span-2">Pulse</span><span class="col-span-2">Burnout</span><span class="col-span-2">Rotación</span><span class="col-span-1">#</span></div>`;}
-
-function insightRows(){return DATA.insights.map((it,i)=>`
-<div class="mb-2 flex gap-2 items-start">
-  <select data-is="${i}" class="rounded-lg bg-zinc-800 border border-zinc-700 px-2 py-1.5 text-xs">
-    <option value="critical" ${it.sev==='critical'?'selected':''}>🔴 Crítico</option>
-    <option value="warning" ${it.sev==='warning'?'selected':''}>🟡 Alerta</option>
-    <option value="info" ${it.sev==='info'?'selected':''}>🔵 Info</option>
-  </select>
-  <div class="flex-1 space-y-1">
-    <input data-it="${i}" value="${it.title}" placeholder="Título" class="w-full rounded-lg bg-zinc-800 border border-zinc-700 px-2 py-1.5 text-xs">
-    <textarea data-ib="${i}" placeholder="Descripción" class="w-full rounded-lg bg-zinc-800 border border-zinc-700 px-2 py-1.5 text-xs">${it.body}</textarea>
-  </div>
-  <button onclick="delInsight(${i})" class="text-rose-400 text-xs">✕</button>
-</div>`).join("");}
-
-function readForm(){
-  DATA.company.name=cName.value;DATA.company.industry=cInd.value;
-  DATA.company.avgSalary=+cSal.value;DATA.company.turnover=+cTur.value;DATA.company.contact=cCon.value;
-  DATA.company.slug=cName.value.toLowerCase().replace(/\s+/g,'');
-  DATA.teams.forEach((t,i)=>{
-    t.name=document.querySelector(`[data-tn="${i}"]`).value;
-    t.workpulse=+document.querySelector(`[data-tw="${i}"]`).value;
-    t.burnout=+document.querySelector(`[data-tb="${i}"]`).value;
-    t.retention=+document.querySelector(`[data-tr="${i}"]`).value;
-    t.size=+document.querySelector(`[data-ts="${i}"]`).value;});
-  DATA.insights.forEach((it,i)=>{
-    it.sev=document.querySelector(`[data-is="${i}"]`).value;
-    it.title=document.querySelector(`[data-it="${i}"]`).value;
-    it.body=document.querySelector(`[data-ib="${i}"]`).value;});
+  const replies={
+    'Estrés':'Entiendo que estás sintiendo una carga importante. Validemos juntos: ¿qué situación específica te genera más presión esta semana? Como coach te propongo una micro-acción: identifica las 3 tareas de mayor impacto y bloquea 2 horas sin interrupciones para ellas. ¿Cuál sería la primera?',
+    'Intención de renuncia':'Gracias por la confianza al compartirlo. Antes de cualquier decisión, hagamos un análisis claro: ¿qué es exactamente lo que te llevaría a quedarte y qué te empuja a salir? Listemos pros y contras objetivos. ¿Qué cambio concreto mejoraría tu situación actual?',
+    'Motivación':'La motivación fluctúa, y reconocerlo es el primer paso. Conectemos con tu propósito: ¿qué parte de tu trabajo te hacía sentir orgulloso hace unos meses? Te propongo recuperar un pequeño logro diario y registrarlo. ¿Qué logro tuviste hoy, por pequeño que sea?',
+    'Liderazgo':'El liderazgo impacta directamente el desempeño del equipo. Profundicemos: ¿qué comportamiento específico de tu líder o tu equipo te gustaría cambiar? Diseñemos una conversación asertiva. ¿Qué necesitas comunicar y qué resultado buscas?',
+    'Metas comerciales':'Las metas pueden sentirse retadoras. Analicemos tu pipeline: ¿en qué etapa se estancan tus negocios? Construyamos un plan de acción: enfócate en los 3 clientes con mayor probabilidad de cierre esta semana. ¿Quiénes son?',
+    'Gestión del tiempo':'Organizar el tiempo es clave para reducir el estrés. Apliquemos la matriz urgente/importante: ¿qué tarea estás postergando que es importante pero no urgente? Agéndala como primera del día. ¿Cuál es?',
+    'Reconocimiento':'Sentirse reconocido impacta el compromiso. Mientras gestionamos eso, también es valioso reconocer tu propio avance. ¿Qué resultado lograste recientemente del que te sientas orgulloso? Y, ¿has compartido tus logros con tu líder?',
+    'General':'Gracias por compartirlo. Cuéntame un poco más para acompañarte mejor: ¿qué te gustaría mejorar o resolver en tu día a día laboral? Estoy aquí para escucharte, analizar la situación y construir contigo un plan de acción.'
+  };
+  return {reply:replies[cat],category:cat};
 }
-function addTeam(){readForm();DATA.teams.push({name:"Nuevo equipo",workpulse:60,burnout:40,retention:30,size:10});document.getElementById("teamList").innerHTML=teamRows();}
-function delTeam(i){readForm();DATA.teams.splice(i,1);document.getElementById("teamList").innerHTML=teamRows();}
-function addInsight(){readForm();DATA.insights.push({sev:"warning",title:"Nuevo insight",body:""});document.getElementById("insightList").innerHTML=insightRows();}
-function delInsight(i){readForm();DATA.insights.splice(i,1);document.getElementById("insightList").innerHTML=insightRows();}
-function saveConfig(){readForm();OPENAI_API_KEY=cKey.value.trim();localStorage.setItem('t3_key',OPENAI_API_KEY);saveData(DATA);go("home");}
-function resetConfig(){if(confirm("¿Borrar todo y volver a valores por defecto?")){DATA=JSON.parse(JSON.stringify(DEFAULT));saveData(DATA);go("config");}}
+function sendChat(){
+  const inp=document.getElementById('chatInput'); const msg=inp.value.trim(); if(!msg)return;
+  chatHistory.push({role:'user',content:msg}); inp.value=''; scrollChat();
+  setTimeout(()=>{
+    const {reply,category}=coachReply(msg);
+    chatHistory.push({role:'assistant',content:reply});
+    // Guardar conversación clasificada
+    DB.conversations.push({empId:CURRENT_USER.empId,category,msg,time:Date.now()});
+    saveDB(); scrollChat();
+  },600);
+}
 
-/* ---------- LOGIN ---------- */
-function Login(){return `
-<div class="min-h-screen flex items-center justify-center px-6">
-  <div class="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900/60 p-8 glow">
-    <button onclick="go('home')" class="text-xs text-zinc-500 mb-4">← Volver</button>
-    <h2 class="text-2xl font-bold">${DATA.company.name}</h2>
-    <p class="text-sm text-zinc-400 mb-6">Elige un rol para la demo</p>
-    <div class="space-y-3">
-      <button onclick="enter('employee')" class="w-full rounded-xl bg-indigo-600 hover:bg-indigo-700 py-3 font-medium">👤 Entrar como Empleado</button>
-      <button onclick="enter('leader')" class="w-full rounded-xl bg-zinc-800 hover:bg-zinc-700 py-3 font-medium">👔 Entrar como Líder</button>
-      <button onclick="enter('admin')" class="w-full rounded-xl bg-zinc-800 hover:bg-zinc-700 py-3 font-medium">🏢 Entrar como RRHH / Dirección</button>
-    </div>
-  </div>
-</div>`;}
-function enter(role){const names={employee:"Empleado",leader:"Líder de equipo",admin:DATA.company.contact};SESSION={role,name:names[role]};go("app");}
+/* ---------- Importación Excel ---------- */
+let pendingFile=null;
+function onFile(e){pendingFile=e.target.files[0];document.getElementById('fileName').textContent=pendingFile?.name||'Selecciona archivo';document.getElementById('importBtn').disabled=!pendingFile;}
+const COLMAP={'ID Empleado':'id','Nombre Completo':'fullName','Cédula':'cedula','Correo Corporativo':'email','Teléfono':'phone','Ciudad':'city','País':'country','Regional':'regional','Área':'area','Equipo':'team','Cargo':'position','Nivel de Cargo':'level','Jefe Directo':'managerName','Correo Jefe Directo':'managerEmail','Fecha de Ingreso':'hireDate','Fecha de Retiro':'exitDate','Estado':'status','Salario Base Mensual':'baseSalary','Meta de Ventas Mensual':'salesGoal','Ventas Acumuladas Mes':'salesAccumulated','Número de Clientes':'numClients','Número de Negocios Cerrados':'numDeals','Motivo de Retiro':'exitReason','Días Ausentes Últimos 12 Meses':'absentDays','Incapacidades Últimos 12 Meses':'medicalLeaves','Evaluación de Desempeño':'performance','Cargo Crítico':'isCritical','Costo de Reemplazo':'replacementCost','Tiempo Promedio de Reemplazo':'replTime','Costo de Capacitación':'trainingCost'};
+const N=v=>v==null||v===''?0:Number(String(v).replace(/[^0-9.-]/g,''))||0;
+function processFile(){
+  if(!pendingFile)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const wb=XLSX.read(ev.target.result,{type:'array',cellDates:true});
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+    let created=0,users=0;
+    rows.forEach(row=>{
+      const r={}; for(const[c,f]of Object.entries(COLMAP))r[f]=row[c];
+      if(!r.email||!r.cedula)return;
+      const status=/retir/i.test(r.status)?'RETIRADO':'ACTIVO';
+      const e={id:String(r.id||r.cedula),fullName:String(r.fullName).trim(),cedula:String(r.cedula).trim(),
+        email:String(r.email).toLowerCase().trim(),city:r.city||'',country:r.country||'Colombia',
+        regional:r.regional||'',area:r.area||'',team:r.team||'',position:r.position||'',level:r.level||'',
+        managerName:r.managerName||'',managerEmail:r.managerEmail?String(r.managerEmail).toLowerCase():null,
+        hireDate:r.hireDate?new Date(r.hireDate).toISOString().slice(0,10):null,
+        exitDate:r.exitDate?new Date(r.exitDate).toISOString().slice(0,10):null,
+        status,exitReason:r.exitReason||null,baseSalary:N(r.baseSalary),salesGoal:N(r.salesGoal),
+        salesAccumulated:N(r.salesAccumulated),numClients:N(r.numClients),numDeals:N(r.numDeals),
+        absentDays:N(r.absentDays),medicalLeaves:N(r.medicalLeaves),performance:r.performance?N(r.performance):50,
+        isCritical:/si|sí|true|1/i.test(String(r.isCritical)),replacementCost:N(r.replacementCost),
+        replTime:N(r.replTime),trainingCost:N(r.trainingCost),
+        stress:30,motivation:65,satisfaction:65};
+      computeScores(e);
+      const idx=DB.employees.findIndex(x=>x.email===e.email);
+      if(idx>=0)DB.employees[idx]=e; else{DB.employees.push(e);created++;}
+      if(!DB.users.some(u=>u.email===e.email)){
+        DB.users.push({email:e.email,pass:e.cedula,role:'COLABORADOR',name:e.fullName,mustChange:true,empId:e.id});
+        users++;
+      }
+    });
+    // Detectar líderes
+    const mgrEmails=new Set(DB.employees.map(e=>e.managerEmail).filter(Boolean));
+    let leaders=0;
+    DB.users.forEach(u=>{if(mgrEmails.has(u.email)&&u.role==='COLABORADOR'){u.role='LIDER';leaders++;}});
+    saveDB();
+    document.getElementById('importResult').innerHTML=card('✅ Importación Completada',
+      `<div class="grid grid-cols-2 gap-4 text-sm">
+        <div class="rounded-lg bg-slate-50 dark:bg-slate-800/50 p-3"><p class="text-xs text-slate-500">Empleados creados</p><p class="text-2xl font-bold">${created}</p></div>
+        <div class="rounded-lg bg-slate-50 dark:bg-slate-800/50 p-3"><p class="text-xs text-slate-500">Usuarios creados</p><p class="text-2xl font-bold">${users}</p></div>
+        <div class="rounded-lg bg-slate-50 dark:bg-slate-800/50 p-3"><p class="text-xs text-slate-500">Líderes detectados</p><p class="text-2xl font-bold">${leaders}</p></div>
+        <div class="rounded-lg bg-slate-50 dark:bg-slate-800/50 p-3"><p class="text-xs text-slate-500">Total empleados</p><p class="text-2xl font-bold">${DB.employees.length}</p></div>
+      </div>`);
+  };
+  reader.readAsArrayBuffer(pendingFile);
+}
 
-/* ---------- SHELL ---------- */
-function Shell(){
-  const nav={employee:[["chat","💬 Chat IA"],["scores","📈 Mis Scores"]],
-    leader:[["heatmap","🔥 Heatmap"],["trends","📉 Tendencias"],["insights","💡 Insights"],["risk","⚠️ Riesgo"]],
-    admin:[["exec","📊 Ejecutivo"],["roi","💰 ROI"],["insights","💡 Insights"]]}[SESSION.role];
-  return `<div class="flex h-screen overflow-hidden">
-  <aside class="w-60 border-r border-zinc-800 bg-zinc-900/50 flex flex-col">
-    <div class="p-5 border-b border-zinc-800"><p class="font-bold">TUPARCH3™</p><p class="text-xs text-zinc-500">${DATA.company.name}</p></div>
-    <nav class="flex-1 p-3 space-y-1">${nav.map(([k,l])=>`<button onclick="setTab('${k}')" id="tab-${k}" class="navbtn w-full text-left px-4 py-2.5 rounded-xl text-sm hover:bg-indigo-600/20">${l}</button>`).join("")}</nav>
-    <div class="p-4 border-t border-zinc-800"><p class="text-sm font-medium">${SESSION.name}</p><p class="text-xs text-zinc-500 capitalize">${SESSION.role}</p><button onclick="go('home')" class="mt-3 text-xs text-rose-400">Salir →</button></div>
-  </aside>
-  <main id="main" class="flex-1 overflow-y-auto"></main></div>`;}
+/* ============================================================
+   NAVEGACIÓN / AUTH
+   ============================================================ */
+const NAV_ITEMS=[
+  {id:'executive',label:'Dashboard Ejecutivo',roles:['ADMIN','PRESIDENCIA','GERENCIA','DIRECTOR_COMERCIAL','RRHH','TALENTO_HUMANO','OPERACIONES']},
+  {id:'commercial',label:'Productividad Comercial',roles:['ADMIN','GERENCIA','DIRECTOR_COMERCIAL','OPERACIONES']},
+  {id:'hr',label:'Recursos Humanos',roles:['ADMIN','GERENCIA','RRHH','TALENTO_HUMANO']},
+  {id:'retention',label:'Retención & Rotación',roles:['ADMIN','GERENCIA','RRHH','TALENTO_HUMANO','PRESIDENCIA']},
+  {id:'financial',label:'Dashboard Financiero',roles:['ADMIN','PRESIDENCIA','GERENCIA']},
+  {id:'import',label:'Importar Datos',roles:['ADMIN','RRHH','TALENTO_HUMANO']},
+  {id:'coach',label:'AI Coach™',roles:['ADMIN','LIDER','COLABORADOR','RRHH','GERENCIA','PRESIDENCIA','DIRECTOR_COMERCIAL','OPERACIONES','TALENTO_HUMANO']},
+];
+const ICONS={executive:'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z',commercial:'M23 6l-9.5 9.5-5-5L1 18',hr:'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100 8 4 4 0 000-8z',retention:'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',financial:'M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6',import:'M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3',coach:'M12 2a3 3 0 00-3 3v7a3 3 0 006 0V5a3 3 0 00-3-3z'};
 
-let currentTab,chartRef=null;
-function mountApp(){setTab({employee:"chat",leader:"heatmap",admin:"exec"}[SESSION.role]);}
-function setTab(t){if(chartRef){chartRef.destroy();chartRef=null;}currentTab=t;
-  document.querySelectorAll(".navbtn").forEach(b=>b.classList.remove("bg-indigo-600","text-white"));
-  const b=document.getElementById("tab-"+t);if(b)b.classList.add("bg-indigo-600","text-white");
-  const v={chat:ChatV,scores:ScoresV,heatmap:HeatV,trends:TrendV,insights:InsV,risk:RiskV,exec:ExecV,roi:RoiV};
-  document.getElementById("main").innerHTML=`<div class="fade-in p-6 md:p-10 max-w-5xl mx-auto">${v[t]()}</div>`;
-  if(t==="chat")initChat();if(t==="trends")drawTrend();if(t==="exec")drawExec();}
+function renderNav(){
+  const nav=document.getElementById('nav');
+  nav.innerHTML=NAV_ITEMS.filter(i=>i.roles.includes(CURRENT_USER.role)).map(i=>
+    `<button onclick="go('${i.id}')" data-view="${i.id}" class="navbtn w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="${ICONS[i.id]}"/></svg>${i.label}</button>`).join('');
+}
+function go(view){
+  destroyChart();
+  document.querySelectorAll('.navbtn').forEach(b=>{
+    const on=b.dataset.view===view;
+    b.classList.toggle('bg-brand-500/10',on);b.classList.toggle('text-brand-600',on);
+  });
+  document.getElementById('main').innerHTML=views[view]();
+  if(window.innerWidth<1024)document.getElementById('sidebar').classList.add('hidden');
+}
+function defaultView(){
+  const r=CURRENT_USER.role;
+  return(r==='COLABORADOR'||r==='LIDER')?'coach':'executive';
+}
 
-/* ---------- VIEWS ---------- */
-function ChatV(){return `<h2 class="text-2xl font-bold mb-1">TUPARCH3 Coach</h2><p class="text-sm text-zinc-400 mb-4">Conversación privada 🔒</p>
-<div id="chatbox" class="rounded-2xl border border-zinc-800 bg-zinc-900/40 h-[55vh] overflow-y-auto p-4 space-y-3"></div>
-<div class="mt-3 flex gap-2"><input id="msg" onkeydown="if(event.key==='Enter')sendMsg()" placeholder="¿Cómo te sientes hoy?" class="flex-1 rounded-xl bg-zinc-800 border border-zinc-700 px-4 py-3 text-sm"><button onclick="sendMsg()" class="rounded-xl bg-indigo-600 px-5">Enviar</button></div>`;}
-let chatHistory=[];
-function initChat(){chatHistory=[];bub("assistant","¡Hola! 👋 Soy tu coach de bienestar de "+DATA.company.name+". ¿Qué tal tu semana?");}
-function bub(r,t,tp){const b=document.getElementById("chatbox");const me=r==="user";b.innerHTML+=`<div class="flex ${me?'justify-end':'justify-start'}"><div class="rounded-2xl px-4 py-3 max-w-[80%] text-sm ${me?'bg-indigo-600':'bg-zinc-800'}">${t}${tp?`<span class="block mt-1 text-[10px] uppercase opacity-50">${tp}</span>`:''}</div></div>`;b.scrollTop=b.scrollHeight;}
-async function sendMsg(){const i=document.getElementById("msg");const t=i.value.trim();if(!t)return;i.value="";bub("user",t,classify(t));chatHistory.push({role:"user",content:t});const b=document.getElementById("chatbox");b.innerHTML+=`<div id="typ" class="text-zinc-500 text-sm animate-pulse pl-2">escribiendo…</div>`;b.scrollTop=b.scrollHeight;const r=await aiReply(t,chatHistory);document.getElementById("typ")?.remove();bub("assistant",r);chatHistory.push({role:"assistant",content:r});}
+document.getElementById('loginForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const email=document.getElementById('loginEmail').value.toLowerCase().trim();
+  const pass=document.getElementById('loginPass').value;
+  const u=DB.users.find(x=>x.email===email&&x.pass===pass);
+  const err=document.getElementById('loginError');
+  if(!u){err.textContent='Credenciales inválidas';err.classList.remove('hidden');return;}
+  CURRENT_USER=u; localStorage.setItem('tuparch3_session',email);
+  startApp();
+});
+function startApp(){
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  document.getElementById('userName').textContent=CURRENT_USER.name;
+  renderNav(); go(defaultView());
+}
+function logout(){localStorage.removeItem('tuparch3_session');location.reload();}
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('hidden');}
+function toggleTheme(){
+  const html=document.documentElement;
+  html.classList.toggle('dark'); html.classList.toggle('light');
+  localStorage.setItem('tuparch3_theme',html.classList.contains('dark')?'dark':'light');
+}
 
-function gauge(l,v,inv){const g=inv?v<40:v>60,m=v>=40&&v<=60;const c=g?"emerald":m?"amber":"rose";return `<div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5"><p class="text-sm text-zinc-400">${l}</p><p class="text-4xl font-bold text-${c}-500 mt-1">${v}<span class="text-zinc-600 text-lg">/100</span></p><div class="mt-3 h-2 rounded-full bg-zinc-800"><div class="h-2 rounded-full bg-${c}-500" style="width:${v}%"></div></div></div>`;}
-function ScoresV(){const avg=Math.round(DATA.teams.reduce((a,t)=>a+t.workpulse,0)/DATA.teams.length);const bn=Math.round(DATA.teams.reduce((a,t)=>a+t.burnout,0)/DATA.teams.length);return `<h2 class="text-2xl font-bold mb-6">Mis Scores</h2><div class="grid md:grid-cols-2 gap-4 mb-6">${gauge("WorkPulse Index",avg)}${gauge("Riesgo Burnout",bn,true)}${gauge("Motivación",65)}${gauge("Satisfacción",70)}</div><div class="rounded-2xl border border-indigo-700 bg-indigo-950/30 p-6"><h3 class="font-semibold mb-2">💡 Recomendación</h3><p class="text-sm text-zinc-300">Bloquea 2 horas sin reuniones esta semana y haz un check-in con tu líder sobre prioridades.</p></div>`;}
-function HeatV(){return `<h2 class="text-2xl font-bold mb-1">Heatmap de Equipos</h2><p class="text-sm text-zinc-400 mb-6">Datos agregados y anonimizados 🔒</p><div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">${DATA.teams.map(t=>{const c=t.burnout>65?"rose":t.burnout>45?"amber":"emerald";return `<div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5"><div class="flex justify-between"><h3 class="font-semibold">${t.name}</h3><span class="text-xs text-zinc-500">${t.size}p</span></div><div class="mt-3 space-y-2 text-sm"><div><div class="flex justify-between"><span class="text-zinc-400">Pulse</span><span>${t.workpulse}</span></div><div class="h-1.5 bg-zinc-800 rounded-full mt-1"><div class="h-1.5 bg-indigo-500 rounded-full" style="width:${t.workpulse}%"></div></div></div><div><div class="flex justify-between"><span class="text-zinc-400">Burnout</span><span class="text-${c}-400">${t.burnout}</span></div><div class="h-1.5 bg-zinc-800 rounded-full mt-1"><div class="h-1.5 bg-${c}-500 rounded-full" style="width:${t.burnout}%"></div></div></div></div></div>`;}).join("")}</div>`;}
-function RiskV(){return `<h2 class="text-2xl font-bold mb-6">Riesgo de Rotación</h2><div class="space-y-3">${[...DATA.teams].sort((a,b)=>b.retention-a.retention).map(t=>{const c=t.retention>50?"rose":t.retention>30?"amber":"emerald";return `<div class="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 flex items-center gap-4"><span class="w-32 font-medium">${t.name}</span><div class="flex-1 h-2 bg-zinc-800 rounded-full"><div class="h-2 bg-${c}-500 rounded-full" style="width:${t.retention}%"></div></div><span class="text-${c}-400 font-semibold w-12 text-right">${t.retention}%</span></div>`;}).join("")}</div>`;}
-function InsV(){return `<h2 class="text-2xl font-bold mb-6">Insights de IA</h2><div class="space-y-3">${DATA.insights.map(i=>{const c={critical:"rose",warning:"amber",info:"indigo"}[i.sev];return `<div class="rounded-2xl border border-${c}-700 bg-${c}-950/20 p-5"><span class="text-xs uppercase text-${c}-400 font-semibold">${i.sev}</span><h3 class="font-semibold mt-1">${i.title}</h3><p class="text-sm text-zinc-300 mt-1">${i.body}</p></div>`;}).join("")}</div>`;}
-function TrendV(){return `<h2 class="text-2xl font-bold mb-6">Tendencias</h2><div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6"><canvas id="tc" height="110"></canvas></div>`;}
-function drawTrend(){const ctx=document.getElementById("tc");if(!ctx)return;const base=Math.round(DATA.teams.reduce((a,t)=>a+t.workpulse,0)/DATA.teams.length);chartRef=new Chart(ctx,{type:"line",data:{labels:["S6","S7","S8","S9","S10","S11","S12"],datasets:[{label:"WorkPulse",data:[base+7,base+4,base-6,base,base-2,base+2,base],borderColor:"#6366f1",backgroundColor:"rgba(99,102,241,.15)",fill:true,tension:.4,pointRadius:4}]},options:{plugins:{legend:{labels:{color:"#a1a1aa"}}},scales:{y:{min:0,max:100,grid:{color:"#27272a"},ticks:{color:"#a1a1aa"}},x:{grid:{display:false},ticks:{color:"#a1a1aa"}}}});}
-function ExecV(){const r=computeROI();const avg=Math.round(DATA.teams.reduce((a,t)=>a+t.workpulse,0)/DATA.teams.length);const crit=DATA.teams.filter(t=>t.burnout>60);return `<h2 class="text-2xl font-bold mb-6">Dashboard Ejecutivo · ${DATA.company.name}</h2><div class="grid md:grid-cols-4 gap-4 mb-8">${[["WorkPulse",avg,"indigo"],["Empleados",r.totalEmp,"zinc"],["Ahorro/año",fmt(r.savings),"emerald"],["ROI",r.roi+"%","emerald"]].map(([l,v,c])=>`<div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5"><p class="text-xs text-zinc-400">${l}</p><p class="text-3xl font-bold text-${c}-400 mt-1">${v}</p></div>`).join("")}</div><div class="grid md:grid-cols-2 gap-4"><div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6"><h3 class="font-semibold mb-3">Burnout por equipo</h3><canvas id="ec" height="160"></canvas></div><div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6"><h3 class="font-semibold mb-2">📈 Predicción</h3><p class="text-sm text-zinc-400">Sin intervención: pérdidas estimadas <b class="text-rose-400">${fmt(r.turnoverCost*0.3)}</b> en 90 días.</p><h3 class="font-semibold mt-4 mb-2">🔥 Crítico</h3>${crit.length?crit.map(t=>`<p class="text-sm text-rose-400">${t.name} — ${t.burnout}/100</p>`).join(""):'<p class="text-sm text-emerald-400">Sin equipos críticos ✅</p>'}</div></div>`;}
-function drawExec(){const ctx=document.getElementById("ec");if(!ctx)return;chartRef=new Chart(ctx,{type:"bar",data:{labels:DATA.teams.map(t=>t.name),datasets:[{data:DATA.teams.map(t=>t.burnout),backgroundColor:DATA.teams.map(t=>t.burnout>65?"#f43f5e":t.burnout>45?"#f59e0b":"#10b981")}]},options:{plugins:{legend:{display:false}},scales:{y:{min:0,max:100,grid:{color:"#27272a"},ticks:{color:"#a1a1aa"}},x:{grid:{display:false},ticks:{color:"#a1a1aa"}}}});}
-function RoiV(){const r=computeROI();return `<h2 class="text-2xl font-bold mb-1">ROI Financiero · ${DATA.company.name}</h2><p class="text-sm text-zinc-400 mb-6">Industria: ${DATA.company.industry} · ${r.totalEmp} empleados · rotación ${DATA.company.turnover}%</p><div class="grid md:grid-cols-3 gap-4 mb-6">${[["Costo Rotación",fmt(r.turnoverCost),"rose"],["Productividad Perdida",fmt(r.prodLoss),"amber"],["Ahorro Estimado/año",fmt(r.savings),"emerald"]].map(([l,v,c])=>`<div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5"><p class="text-xs text-zinc-400">${l}</p><p class="text-2xl font-bold text-${c}-400 mt-1">${v}</p></div>`).join("")}</div><div class="rounded-2xl border border-emerald-700 bg-emerald-950/20 p-8 text-center"><p class="text-zinc-400">Retorno proyectado</p><p class="text-6xl font-bold text-emerald-400 mt-2">${r.roi}%</p><p class="text-sm text-zinc-400 mt-3">Por cada $1 invertido, ~$${(1+r.roi/100).toFixed(2)} en ahorro de rotación y productividad.</p></div>`;}
-
-render("home");
+/* ---------- Init ---------- */
+(function init(){
+  if(localStorage.getItem('tuparch3_theme')==='dark'){document.documentElement.classList.add('dark');document.documentElement.classList.remove('light');}
+  loadDB();
+  if(!DB.employees.length)seedDemo();
+  const sess=localStorage.getItem('tuparch3_session');
+  if(sess){const u=DB.users.find(x=>x.email===sess);if(u){CURRENT_USER=u;startApp();}}
+})();
 </script>
 </body>
 </html>
